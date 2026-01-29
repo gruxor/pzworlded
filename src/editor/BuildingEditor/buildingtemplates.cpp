@@ -20,6 +20,7 @@
 #include "preferences.h"
 
 #include "building.h"
+#include "buildingfurniturefile.h"
 #include "buildingtiles.h"
 #include "furnituregroups.h"
 #include "simplefile.h"
@@ -378,7 +379,7 @@ BuildingTileEntry *TemplatesFile::readTileEntry(SimpleFileBlock &block, QString 
 FurnitureTiles *TemplatesFile::readFurnitureTiles(SimpleFileBlock &block, QString &error)
 {
     FurnitureGroups *fg = FurnitureGroups::instance();
-    if (FurnitureTiles *result = fg->furnitureTilesFromSFB(block, error)) {
+    if (FurnitureTiles *result = BuildingFurnitureFile::furnitureTilesFromSFB(block, error)) {
         FurnitureTiles *match = fg->findMatch(result);
         if (match) {
             delete result;
@@ -411,7 +412,7 @@ void TemplatesFile::writeTileEntry(SimpleFileBlock &parentBlock, BuildingTileEnt
 
 void TemplatesFile::writeFurnitureTiles(SimpleFileBlock &block, FurnitureTiles *ftiles)
 {
-    block.blocks += FurnitureGroups::instance()->furnitureTilesToSFB(ftiles);
+    block.blocks += BuildingFurnitureFile::furnitureTilesToSFB(ftiles);
 }
 
 QString TemplatesFile::nameForEntry(BuildingTileEntry *entry)
@@ -727,6 +728,16 @@ int BuildingTemplate::categoryEnum(int n)
         break;
     }
     return 0;
+}
+
+void BuildingTemplate::insertRoom(int index, Room *room)
+{
+    RoomList.insert(index, room);
+}
+
+Room *BuildingTemplate::removeRoom(int index)
+{
+    return RoomList.takeAt(index);
 }
 
 QString BuildingTemplate::enumToString(int n)

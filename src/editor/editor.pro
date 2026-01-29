@@ -63,6 +63,8 @@ RCC_DIR = .rcc
 OBJECTS_DIR = .obj
 
 SOURCES += main.cpp\
+    BuildingEditor/buildingfurniturefile.cpp \
+    BuildingEditor/buildingtilesfile.cpp \
     exportlotsprogressdialog.cpp \
     generatelotsfailuredialog.cpp \
     loadthumbnailsdialog.cpp \
@@ -188,6 +190,8 @@ SOURCES += main.cpp\
     waterflow.cpp
 
 HEADERS  += mainwindow.h \
+    BuildingEditor/buildingfurniturefile.h \
+    BuildingEditor/buildingtilesfile.h \
     exportlotsprogressdialog.h \
     generatelotsfailuredialog.h \
     InGameMap/clipper.hpp \
