@@ -19,6 +19,7 @@
 
 #include "preferences.h"
 #include "buildingfloor.h"
+#include "buildingreader.h"
 #include "buildingtilesfile.h"
 
 #include "preferences.h"
@@ -709,13 +710,13 @@ bool BuildingTileEntry::equals(BuildingTileEntry *other) const
             (mOffsets == other->mOffsets);
 }
 
-bool BuildingTileEntry::equals(BuildingTileEntry *other, int tileCount) const
+bool BuildingTileEntry::equals(BuildingTileEntry *other, const QVector<int> &enums) const
 {
     if (mCategory != other->mCategory) {
         return false;
     }
-    for (int i = 0; i < tileCount; i++) {
-        if (mTiles[i] != other->mTiles[i]) {
+    for (int e : enums) {
+        if (mTiles[e] != other->mTiles[e]) {
             return false;
         }
     }
@@ -927,9 +928,6 @@ bool BTC_Doors::isWest(int e) const
 
 int BTC_Doors::wallEnum(const BuildingTileEntry *entry, int e) const
 {
-    if (entry == nullptr) {
-        return BuildingTileCategory::wallEnum(entry, e);
-    }
     switch (e) {
     case TileEnum::North:
     case TileEnum::NorthOpen:
@@ -1124,6 +1122,30 @@ BTC_Walls::TileEnum BTC_Walls::windowShapeToEnumN(const QString &windowShape)
 
 /////
 
+QVector<int> BTC_EWalls::enumsForVersion(int version) const
+{
+    if (version < BuildingReader::VERSION5) {
+        // Version 5 added 16 new wall shapes for windows.
+        // Look for a match of the first 8 tiles only.
+        return { West, North, NorthWest, SouthEast, WestWindow, NorthWindow, WestDoor, NorthDoor };
+    }
+    return BuildingTileCategory::enumsForVersion(version);
+}
+
+/////
+
+QVector<int> BTC_IWalls::enumsForVersion(int version) const
+{
+    if (version < BuildingReader::VERSION5) {
+        // Version 5 added 16 new wall shapes for windows.
+        // Look for a match of the first 8 tiles only.
+        return { West, North, NorthWest, SouthEast, WestWindow, NorthWindow, WestDoor, NorthDoor };
+    }
+    return BuildingTileCategory::enumsForVersion(version);
+}
+
+/////
+
 BTC_Windows::BTC_Windows(const QString &label) :
     BuildingTileCategory(QLatin1String("windows"), label, West)
 {
@@ -1170,11 +1192,11 @@ bool BTC_Windows::isWest(int e) const
 
 int BTC_Windows::wallEnum(const BuildingTileEntry *entry, int e) const
 {
-    if (entry == nullptr) {
+    if (entry == nullptr || entry->isNone()) {
         return defaultWallEnum(entry, e);
     }
     BuildingTile *tile = entry->tile(e);
-    if (tile == nullptr) {
+    if (tile == nullptr || tile->isNone()) {
         return defaultWallEnum(entry, e);
     }
     TileDefWatcher *tileDefWatcher = getTileDefWatcher();
@@ -1271,42 +1293,83 @@ int BTC_Ceiling::shadowToEnum(int shadowIndex)
 BTC_RoofCaps::BTC_RoofCaps(const QString &label) :
     BuildingTileCategory(QLatin1String("roof_caps"), label, CapRiseE3)
 {
-    mEnumNames += QLatin1String("CapRiseE1");
-    mEnumNames += QLatin1String("CapRiseE2");
-    mEnumNames += QLatin1String("CapRiseE3");
-    mEnumNames += QLatin1String("CapFallE1");
-    mEnumNames += QLatin1String("CapFallE2");
-    mEnumNames += QLatin1String("CapFallE3");
+    mEnumNames += QStringLiteral("CapRiseE1");
+    mEnumNames += QStringLiteral("CapRiseE2");
+    mEnumNames += QStringLiteral("CapRiseE3");
+    mEnumNames += QStringLiteral("CapFallE1");
+    mEnumNames += QStringLiteral("CapFallE2");
+    mEnumNames += QStringLiteral("CapFallE3");
 
-    mEnumNames += QLatin1String("CapRiseS1");
-    mEnumNames += QLatin1String("CapRiseS2");
-    mEnumNames += QLatin1String("CapRiseS3");
-    mEnumNames += QLatin1String("CapFallS1");
-    mEnumNames += QLatin1String("CapFallS2");
-    mEnumNames += QLatin1String("CapFallS3");
+    mEnumNames += QStringLiteral("CapRiseS1");
+    mEnumNames += QStringLiteral("CapRiseS2");
+    mEnumNames += QStringLiteral("CapRiseS3");
+    mEnumNames += QStringLiteral("CapFallS1");
+    mEnumNames += QStringLiteral("CapFallS2");
+    mEnumNames += QStringLiteral("CapFallS3");
 
-    mEnumNames += QLatin1String("PeakPt5S");
-    mEnumNames += QLatin1String("PeakPt5E");
-    mEnumNames += QLatin1String("PeakOnePt5S");
-    mEnumNames += QLatin1String("PeakOnePt5E");
-    mEnumNames += QLatin1String("PeakTwoPt5S");
-    mEnumNames += QLatin1String("PeakTwoPt5E");
+    mEnumNames += QStringLiteral("PeakPt5S");
+    mEnumNames += QStringLiteral("PeakPt5E");
+    mEnumNames += QStringLiteral("PeakOnePt5S");
+    mEnumNames += QStringLiteral("PeakOnePt5E");
+    mEnumNames += QStringLiteral("PeakTwoPt5S");
+    mEnumNames += QStringLiteral("PeakTwoPt5E");
 
-    mEnumNames += QLatin1String("CapGapS1");
-    mEnumNames += QLatin1String("CapGapS2");
-    mEnumNames += QLatin1String("CapGapS3");
-    mEnumNames += QLatin1String("CapGapE1");
-    mEnumNames += QLatin1String("CapGapE2");
-    mEnumNames += QLatin1String("CapGapE3");
+    mEnumNames += QStringLiteral("CapGapS1");
+    mEnumNames += QStringLiteral("CapGapS2");
+    mEnumNames += QStringLiteral("CapGapS3");
+    mEnumNames += QStringLiteral("CapGapE1");
+    mEnumNames += QStringLiteral("CapGapE2");
+    mEnumNames += QStringLiteral("CapGapE3");
 
-    mEnumNames += QLatin1String("CapShallowRiseS1");
-    mEnumNames += QLatin1String("CapShallowRiseS2");
-    mEnumNames += QLatin1String("CapShallowFallS1");
-    mEnumNames += QLatin1String("CapShallowFallS2");
-    mEnumNames += QLatin1String("CapShallowRiseE1");
-    mEnumNames += QLatin1String("CapShallowRiseE2");
-    mEnumNames += QLatin1String("CapShallowFallE1");
-    mEnumNames += QLatin1String("CapShallowFallE2");
+    mEnumNames += QStringLiteral("CapShallowRiseS1");
+    mEnumNames += QStringLiteral("CapShallowRiseS2");
+    mEnumNames += QStringLiteral("CapShallowFallS1");
+    mEnumNames += QStringLiteral("CapShallowFallS2");
+    mEnumNames += QStringLiteral("CapShallowRiseE1");
+    mEnumNames += QStringLiteral("CapShallowRiseE2");
+    mEnumNames += QStringLiteral("CapShallowFallE1");
+    mEnumNames += QStringLiteral("CapShallowFallE2");
+
+    mEnumNames += QStringLiteral("CapSlope30RiseE1");
+    mEnumNames += QStringLiteral("CapSlope30RiseE2");
+    mEnumNames += QStringLiteral("CapSlope30RiseE3");
+    mEnumNames += QStringLiteral("CapSlope30RiseE4");
+    mEnumNames += QStringLiteral("CapSlope30RiseE5");
+    mEnumNames += QStringLiteral("CapSlope30RiseE6");
+
+    mEnumNames += QStringLiteral("CapSlope30FallE1");
+    mEnumNames += QStringLiteral("CapSlope30FallE2");
+    mEnumNames += QStringLiteral("CapSlope30FallE3");
+    mEnumNames += QStringLiteral("CapSlope30FallE4");
+    mEnumNames += QStringLiteral("CapSlope30FallE5");
+    mEnumNames += QStringLiteral("CapSlope30FallE6");
+
+    mEnumNames += QStringLiteral("CapSlope30RiseS1");
+    mEnumNames += QStringLiteral("CapSlope30RiseS2");
+    mEnumNames += QStringLiteral("CapSlope30RiseS3");
+    mEnumNames += QStringLiteral("CapSlope30RiseS4");
+    mEnumNames += QStringLiteral("CapSlope30RiseS5");
+    mEnumNames += QStringLiteral("CapSlope30RiseS6");
+
+    mEnumNames += QStringLiteral("CapSlope30FallS1");
+    mEnumNames += QStringLiteral("CapSlope30FallS2");
+    mEnumNames += QStringLiteral("CapSlope30FallS3");
+    mEnumNames += QStringLiteral("CapSlope30FallS4");
+    mEnumNames += QStringLiteral("CapSlope30FallS5");
+    mEnumNames += QStringLiteral("CapSlope30FallS6");
+
+    mEnumNames += QStringLiteral("CapPeak30E1");
+    mEnumNames += QStringLiteral("CapPeak30E2");
+    mEnumNames += QStringLiteral("CapPeak30E3");
+    mEnumNames += QStringLiteral("CapPeak30E4");
+    mEnumNames += QStringLiteral("CapPeak30E5");
+    mEnumNames += QStringLiteral("CapPeak30E6");
+    mEnumNames += QStringLiteral("CapPeak30S1");
+    mEnumNames += QStringLiteral("CapPeak30S2");
+    mEnumNames += QStringLiteral("CapPeak30S3");
+    mEnumNames += QStringLiteral("CapPeak30S4");
+    mEnumNames += QStringLiteral("CapPeak30S5");
+    mEnumNames += QStringLiteral("CapPeak30S6");
 
     Q_ASSERT(mEnumNames.size() == EnumCount);
 }
@@ -1352,56 +1415,95 @@ int BTC_RoofCaps::shadowToEnum(int shadowIndex)
         CapGapE1, CapGapE2, CapGapE3, CapGapS3, CapGapS2, CapGapS1,
         CapShallowRiseE1, CapShallowRiseE2, -1, -1, CapShallowFallS2, CapShallowFallS1,
         CapShallowFallE1, CapShallowFallE2, -1, -1, CapShallowRiseS2, CapShallowRiseS1,
+
+        CapSlope30RiseE1, CapSlope30RiseE2, CapSlope30RiseE3, CapSlope30RiseE4, CapSlope30RiseE5, CapSlope30RiseE6,
+        CapSlope30FallE6, CapSlope30FallE5, CapSlope30FallE4, CapSlope30FallE3, CapSlope30FallE2, CapSlope30FallE1,
+        CapSlope30RiseS1, CapSlope30RiseS2, CapSlope30RiseS3, CapSlope30RiseS4, CapSlope30RiseS5, CapSlope30RiseS6,
+        CapSlope30FallS6, CapSlope30FallS5, CapSlope30FallS4, CapSlope30FallS3, CapSlope30FallS2, CapSlope30FallS1,
+        CapPeak30E1, CapPeak30E2, CapPeak30E3, CapPeak30E4, CapPeak30E5, CapPeak30E6,
+        CapPeak30S1, CapPeak30S2, CapPeak30S3, CapPeak30S4, CapPeak30S5, CapPeak30S6,
     };
     return map[shadowIndex];
+}
+
+QVector<int> BTC_RoofCaps::enumsForVersion(int version) const
+{
+    if (version < BuildingReader::VERSION6) {
+        // Version 6 added 30-degree roofs
+        QVector<int> ret;
+        for (int i = CapRiseE1; i <= CapShallowFallE2; i++) {
+            ret += i;
+        }
+        return ret;
+    }
+    return BuildingTileCategory::enumsForVersion(version);
 }
 
 /////
 
 BTC_RoofSlopes::BTC_RoofSlopes(const QString &label) :
-    BuildingTileCategory(QLatin1String("roof_slopes"), label, SlopeS2)
+    BuildingTileCategory(QStringLiteral("roof_slopes"), label, SlopeS2)
 {
-    mEnumNames += QLatin1String("SlopeS1");
-    mEnumNames += QLatin1String("SlopeS2");
-    mEnumNames += QLatin1String("SlopeS3");
-    mEnumNames += QLatin1String("SlopeE1");
-    mEnumNames += QLatin1String("SlopeE2");
-    mEnumNames += QLatin1String("SlopeE3");
+    mEnumNames += QStringLiteral("SlopeS1");
+    mEnumNames += QStringLiteral("SlopeS2");
+    mEnumNames += QStringLiteral("SlopeS3");
+    mEnumNames += QStringLiteral("SlopeE1");
+    mEnumNames += QStringLiteral("SlopeE2");
+    mEnumNames += QStringLiteral("SlopeE3");
 
-    mEnumNames += QLatin1String("SlopePt5S");
-    mEnumNames += QLatin1String("SlopePt5E");
-    mEnumNames += QLatin1String("SlopeOnePt5S");
-    mEnumNames += QLatin1String("SlopeOnePt5E");
-    mEnumNames += QLatin1String("SlopeTwoPt5S");
-    mEnumNames += QLatin1String("SlopeTwoPt5E");
+    mEnumNames += QStringLiteral("SlopePt5S");
+    mEnumNames += QStringLiteral("SlopePt5E");
+    mEnumNames += QStringLiteral("SlopeOnePt5S");
+    mEnumNames += QStringLiteral("SlopeOnePt5E");
+    mEnumNames += QStringLiteral("SlopeTwoPt5S");
+    mEnumNames += QStringLiteral("SlopeTwoPt5E");
 
-    mEnumNames += QLatin1String("ShallowSlopeW1");
-    mEnumNames += QLatin1String("ShallowSlopeW2");
-    mEnumNames += QLatin1String("ShallowSlopeE1");
-    mEnumNames += QLatin1String("ShallowSlopeE2");
-    mEnumNames += QLatin1String("ShallowSlopeN1");
-    mEnumNames += QLatin1String("ShallowSlopeN2");
-    mEnumNames += QLatin1String("ShallowSlopeS1");
-    mEnumNames += QLatin1String("ShallowSlopeS2");
+    mEnumNames += QStringLiteral("ShallowSlopeW1");
+    mEnumNames += QStringLiteral("ShallowSlopeW2");
+    mEnumNames += QStringLiteral("ShallowSlopeE1");
+    mEnumNames += QStringLiteral("ShallowSlopeE2");
+    mEnumNames += QStringLiteral("ShallowSlopeN1");
+    mEnumNames += QStringLiteral("ShallowSlopeN2");
+    mEnumNames += QStringLiteral("ShallowSlopeS1");
+    mEnumNames += QStringLiteral("ShallowSlopeS2");
 
-    mEnumNames += QLatin1String("Inner1");
-    mEnumNames += QLatin1String("Inner2");
-    mEnumNames += QLatin1String("Inner3");
-    mEnumNames += QLatin1String("Outer1");
-    mEnumNames += QLatin1String("Outer2");
-    mEnumNames += QLatin1String("Outer3");
-    mEnumNames += QLatin1String("InnerPt5");
-    mEnumNames += QLatin1String("InnerOnePt5");
-    mEnumNames += QLatin1String("InnerTwoPt5");
-    mEnumNames += QLatin1String("OuterPt5");
-    mEnumNames += QLatin1String("OuterOnePt5");
-    mEnumNames += QLatin1String("OuterTwoPt5");
-    mEnumNames += QLatin1String("CornerSW1");
-    mEnumNames += QLatin1String("CornerSW2");
-    mEnumNames += QLatin1String("CornerSW3");
-    mEnumNames += QLatin1String("CornerNE1");
-    mEnumNames += QLatin1String("CornerNE2");
-    mEnumNames += QLatin1String("CornerNE3");
+    mEnumNames << QStringLiteral("Slope30S1") << QStringLiteral("Slope30S2") << QStringLiteral("Slope30S3") << QStringLiteral("Slope30S4") << QStringLiteral("Slope30S5") << QStringLiteral("Slope30S6");
+    mEnumNames << QStringLiteral("Slope30E1") << QStringLiteral("Slope30E2") << QStringLiteral("Slope30E3") << QStringLiteral("Slope30E4") << QStringLiteral("Slope30E5") << QStringLiteral("Slope30E6");
+    mEnumNames << QStringLiteral("Slope30W1") << QStringLiteral("Slope30W2") << QStringLiteral("Slope30W3") << QStringLiteral("Slope30W4") << QStringLiteral("Slope30W5") << QStringLiteral("Slope30W6");
+    mEnumNames << QStringLiteral("Slope30N1") << QStringLiteral("Slope30N2") << QStringLiteral("Slope30N3") << QStringLiteral("Slope30N4") << QStringLiteral("Slope30N5") << QStringLiteral("Slope30N6");
+
+    mEnumNames << QStringLiteral("Peak30NS1") << QStringLiteral("Peak30NS2") << QStringLiteral("Peak30NS3") << QStringLiteral("Peak30NS4") << QStringLiteral("Peak30NS5") << QStringLiteral("Peak30NS6");
+    mEnumNames << QStringLiteral("Peak30WE1") << QStringLiteral("Peak30WE2") << QStringLiteral("Peak30WE3") << QStringLiteral("Peak30WE4") << QStringLiteral("Peak30WE5") << QStringLiteral("Peak30WE6");
+    mEnumNames << QStringLiteral("Peak30Quad1") << QStringLiteral("Peak30Quad2") << QStringLiteral("Peak30Quad3") << QStringLiteral("Peak30Quad4") << QStringLiteral("Peak30Quad5") << QStringLiteral("Peak30Quad6");
+
+    mEnumNames += QStringLiteral("Inner1");
+    mEnumNames += QStringLiteral("Inner2");
+    mEnumNames += QStringLiteral("Inner3");
+    mEnumNames += QStringLiteral("Outer1");
+    mEnumNames += QStringLiteral("Outer2");
+    mEnumNames += QStringLiteral("Outer3");
+    mEnumNames += QStringLiteral("InnerPt5");
+    mEnumNames += QStringLiteral("InnerOnePt5");
+    mEnumNames += QStringLiteral("InnerTwoPt5");
+    mEnumNames += QStringLiteral("OuterPt5");
+    mEnumNames += QStringLiteral("OuterOnePt5");
+    mEnumNames += QStringLiteral("OuterTwoPt5");
+    mEnumNames += QStringLiteral("CornerSW1");
+    mEnumNames += QStringLiteral("CornerSW2");
+    mEnumNames += QStringLiteral("CornerSW3");
+    mEnumNames += QStringLiteral("CornerNE1");
+    mEnumNames += QStringLiteral("CornerNE2");
+    mEnumNames += QStringLiteral("CornerNE3");
+
+    mEnumNames << QStringLiteral("InnerSlope30SE1") << QStringLiteral("InnerSlope30SE2") << QStringLiteral("InnerSlope30SE3") << QStringLiteral("InnerSlope30SE4") << QStringLiteral("InnerSlope30SE5") << QStringLiteral("InnerSlope30SE6");
+    mEnumNames << QStringLiteral("InnerSlope30NE1") << QStringLiteral("InnerSlope30NE2") << QStringLiteral("InnerSlope30NE3") << QStringLiteral("InnerSlope30NE4") << QStringLiteral("InnerSlope30NE5") << QStringLiteral("InnerSlope30NE6");
+    mEnumNames << QStringLiteral("InnerSlope30NW1") << QStringLiteral("InnerSlope30NW2") << QStringLiteral("InnerSlope30NW3") << QStringLiteral("InnerSlope30NW4") << QStringLiteral("InnerSlope30NW5") << QStringLiteral("InnerSlope30NW6");
+    mEnumNames << QStringLiteral("InnerSlope30SW1") << QStringLiteral("InnerSlope30SW2") << QStringLiteral("InnerSlope30SW3") << QStringLiteral("InnerSlope30SW4") << QStringLiteral("InnerSlope30SW5") << QStringLiteral("InnerSlope30SW6");
+
+    mEnumNames << QStringLiteral("OuterSlope30SE1") << QStringLiteral("OuterSlope30SE2") << QStringLiteral("OuterSlope30SE3") << QStringLiteral("OuterSlope30SE4") << QStringLiteral("OuterSlope30SE5") << QStringLiteral("OuterSlope30SE6");
+    mEnumNames << QStringLiteral("OuterSlope30NE1") << QStringLiteral("OuterSlope30NE2") << QStringLiteral("OuterSlope30NE3") << QStringLiteral("OuterSlope30NE4") << QStringLiteral("OuterSlope30NE5") << QStringLiteral("OuterSlope30NE6");
+    mEnumNames << QStringLiteral("OuterSlope30NW1") << QStringLiteral("OuterSlope30NW2") << QStringLiteral("OuterSlope30NW3") << QStringLiteral("OuterSlope30NW4") << QStringLiteral("OuterSlope30NW5") << QStringLiteral("OuterSlope30NW6");
+    mEnumNames << QStringLiteral("OuterSlope30SW1") << QStringLiteral("OuterSlope30SW2") << QStringLiteral("OuterSlope30SW3") << QStringLiteral("OuterSlope30SW4") << QStringLiteral("OuterSlope30SW5") << QStringLiteral("OuterSlope30SW6");
 
     Q_ASSERT(mEnumNames.size() == EnumCount);
 }
@@ -1449,10 +1551,46 @@ int BTC_RoofSlopes::shadowToEnum(int shadowIndex)
         Outer1, Outer2, Outer3, Inner1, Inner2, Inner3,
         OuterPt5, OuterOnePt5, OuterTwoPt5, InnerPt5, InnerOnePt5, InnerTwoPt5,
         CornerSW1, CornerSW2, CornerSW3, CornerNE3, CornerNE2, CornerNE1,
+
         ShallowSlopeW1, ShallowSlopeW2, -1, -1, ShallowSlopeE2, ShallowSlopeE1,
         ShallowSlopeN1, ShallowSlopeN2, -1, -1, ShallowSlopeS2, ShallowSlopeS1,
+
+        Slope30S1, Slope30S2, Slope30S3, Slope30S4, Slope30S5, Slope30S6,
+        Slope30E6, Slope30E5, Slope30E4, Slope30E3, Slope30E2, Slope30E1,
+        Slope30W1, Slope30W2, Slope30W3, Slope30W4, Slope30W5, Slope30W6,
+        Slope30N6, Slope30N5, Slope30N4, Slope30N3, Slope30N2, Slope30N1,
+
+        InnerSlope30NW1, InnerSlope30NW2, InnerSlope30NW3, InnerSlope30NW4, InnerSlope30NW5, InnerSlope30NW6,
+        InnerSlope30SW6, InnerSlope30SW5, InnerSlope30SW4, InnerSlope30SW3, InnerSlope30SW2, InnerSlope30SW1,
+        InnerSlope30SE1, InnerSlope30SE2, InnerSlope30SE3, InnerSlope30SE4, InnerSlope30SE5, InnerSlope30SE6,
+        InnerSlope30NE6, InnerSlope30NE5, InnerSlope30NE4, InnerSlope30NE3, InnerSlope30NE2, InnerSlope30NE1,
+
+        OuterSlope30SE1, OuterSlope30SE2, OuterSlope30SE3, OuterSlope30SE4, OuterSlope30SE5, OuterSlope30SE6,
+        OuterSlope30NE6, OuterSlope30NE5, OuterSlope30NE4, OuterSlope30NE3, OuterSlope30NE2, OuterSlope30NE1,
+        OuterSlope30SW1, OuterSlope30SW2, OuterSlope30SW3, OuterSlope30SW4, OuterSlope30SW5, OuterSlope30SW6,
+        OuterSlope30NW6, OuterSlope30NW5, OuterSlope30NW4, OuterSlope30NW3, OuterSlope30NW2, OuterSlope30NW1,
+
+        Peak30NS1, Peak30NS2, Peak30NS3, Peak30NS4, Peak30NS5, Peak30NS6, // intersection runs west-east
+        Peak30WE6, Peak30WE5, Peak30WE4, Peak30WE3, Peak30WE2, Peak30WE1, // intersection runs north-south
+        Peak30Quad1, Peak30Quad2, Peak30Quad3, Peak30Quad4, Peak30Quad5, Peak30Quad6,
     };
     return map[shadowIndex];
+}
+
+QVector<int> BTC_RoofSlopes::enumsForVersion(int version) const
+{
+    if (version < BuildingReader::VERSION6) {
+        // Version 6 added 30-degree roofs
+        QVector<int> ret;
+        for (int i = SlopeS1; i <= ShallowSlopeS2; i++) {
+            ret += i;
+        }
+        for (int i = Inner1; i <= CornerNE3; i++) {
+            ret += i;
+        }
+        return ret;
+    }
+    return BuildingTileCategory::enumsForVersion(version);
 }
 
 /////
@@ -1647,7 +1785,7 @@ int BuildingTileCategory::shadowRows() const
 
 int BuildingTileCategory::enumToShadow(int e)
 {
-    QVector<int> map(100);
+    QVector<int> map(enumCount());
     for (int i = 0; i < enumCount(); i++)
         map[i] = -1;
     for (int i = 0; i < shadowCount(); i++) {
@@ -1668,14 +1806,25 @@ BuildingTileEntry *BuildingTileCategory::findMatch(BuildingTileEntry *entry) con
     return nullptr;
 }
 
-BuildingTileEntry *BuildingTileCategory::findMatch(BuildingTileEntry *entry, int tileCount) const
+BuildingTileEntry *BuildingTileCategory::findMatchForVersion(BuildingTileEntry *entry, int version) const
 {
-    foreach (BuildingTileEntry *candidate, mEntries) {
-        if (candidate->equals(entry, tileCount)) {
+    const QVector<int> enums = enumsForVersion(version);
+    for (BuildingTileEntry *candidate : std::as_const(mEntries)) {
+        if (candidate->equals(entry, enums)) {
             return candidate;
         }
     }
     return nullptr;
+}
+
+QVector<int> BuildingTileCategory::enumsForVersion(int version) const
+{
+    Q_UNUSED(version)
+    QVector<int> ret;
+    for (int i = 0; i < enumCount(); i++) {
+        ret += i;
+    }
+    return ret;
 }
 
 BuildingTileEntry *BuildingTileCategory::findMatchIgnoreCategory(BuildingTileEntry *entry) const

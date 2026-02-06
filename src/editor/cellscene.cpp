@@ -1487,7 +1487,7 @@ void CompositeLayerGroupItem::paint(QPainter *p, const QStyleOptionGraphicsItem 
                     mVBO[x + y * 3] = mcVBO->getLayerVBO(this);
                 }
 
-                mcVBO->mUsedTilesets = mc->usedTilesets();
+                mcVBO->mUsedTilesets = mc->root()->usedTilesets();
                 if (mcVBO->mUsedTilesets.contains(invisibleTileset) == false) {
                     mcVBO->mUsedTilesets += invisibleTileset;
                 }
