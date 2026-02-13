@@ -38,7 +38,7 @@
 
 #include "InGameMap/ingamemapscene.h"
 
-#include "isometricrenderer.h"
+#include "customtilesize.h"
 #include "map.h"
 #include "maplevel.h"
 #include "mapobject.h"
@@ -1112,7 +1112,8 @@ void LayerGroupVBO::gatherTiles(Tiled::MapRenderer *renderer, const QRectF& expo
                         tile = missingTile;
                     }
                     Tileset *tileset = tile->tileset();
-                    bool bJUMBO = tileset->name().contains(QStringLiteral("JUMBO_"));
+                    QSize customSize = CustomTileSize::forTileset(tileset->name());
+                    bool bJUMBO = !customSize.isEmpty();
                     VBOTile vboTile;
                     vboTile.mSubMap = cell.mSubMap;
                     vboTile.mHideIfVisible = cell.mHideIfVisible;
@@ -1125,7 +1126,7 @@ void LayerGroupVBO::gatherTiles(Tiled::MapRenderer *renderer, const QRectF& expo
                     vboTile.mInvisible = tile == invisibleTile;
 
                     if (bJUMBO) {
-                        vboTile.mRect.translate(-tileWidth / 2, 0); // FIXME: Shouldn't Tiled::setZomboidTileOffset() take care of this? Possibly a TileScale=2 issue.
+                        vboTile.mRect.translate(-(customSize.width() - 64) / 2, 0); // FIXME: Shouldn't Tiled::setZomboidTileOffset() take care of this? Possibly a TileScale=2 issue.
                     } else if (tileWidth == tile->width() * 2) {
                         vboTile.mRect.translate(tile->offset().x(), tile->offset().y() - tile->height());
                         vboTile.mRect.setWidth(tile->atlasSize().width() * 2);
@@ -1138,7 +1139,7 @@ void LayerGroupVBO::gatherTiles(Tiled::MapRenderer *renderer, const QRectF& expo
                     tileCount[vx + vy * VBO_SQUARES]++;
                     tiles += vboTile;
 
-                    if (bJUMBO) {
+                    if (bJUMBO && !tileset->name().contains(QStringLiteral("JUMBOXL_")) && !tileset->name().contains(QStringLiteral("JUMBOXXL_"))) {
                         tileCount[vx + vy * VBO_SQUARES] += tryAddExtraJumbo_Trunk(tile, screenPos, tileWidth, tiles);
                         tileCount[vx + vy * VBO_SQUARES] += tryAddExtraJumbo_Leaves(tile, screenPos, tileWidth, tiles);
                     }

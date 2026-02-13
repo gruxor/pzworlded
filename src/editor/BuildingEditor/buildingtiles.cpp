@@ -19,7 +19,6 @@
 
 #include "preferences.h"
 #include "buildingfloor.h"
-#include "buildingreader.h"
 #include "buildingtilesfile.h"
 
 #include "preferences.h"

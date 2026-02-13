@@ -25,6 +25,7 @@
 
 #include "zlevelrenderer.h"
 
+#include "customtilesize.h"
 #include "map.h"
 #include "mapobject.h"
 #include "objectgroup.h"
@@ -321,9 +322,10 @@ void ZLevelRenderer::drawTileLayer(QPainter *painter,
                     }
 
                     QString tilesetName = cell.tile->tileset()->name();
-                    bool bJUMBO = tilesetName.contains(QStringLiteral("JUMBO_"));
+                    QSize customSize = CustomTileSize::forTileset(tilesetName);
+                    bool bJUMBO = !customSize.isEmpty();
                     if (bJUMBO) {
-                        dx -= tileWidth / 2;
+                        dx -= (customSize.width() - 64) / 2; // tileWidth / 2;
                     } else if (tileWidth == cell.tile->width() * 2) {
                         m11 *= 2.0f;
                         m22 *= 2.0f;
@@ -336,7 +338,7 @@ void ZLevelRenderer::drawTileLayer(QPainter *painter,
                         dy += cell.tile->height() / 2;
                     }
 
-                    if (bJUMBO) {
+                    if (bJUMBO && !tilesetName.contains(QStringLiteral("JUMBOXL")) && !tilesetName.contains(QStringLiteral("JUMBOXXL"))) {
                         drawJumboTreeTile_Trunk(cell.tile, painter, baseTransform, x, y, m11, m12, m21, m22);
                     }
 
@@ -345,7 +347,7 @@ void ZLevelRenderer::drawTileLayer(QPainter *painter,
 
                     painter->drawImage(0, 0, img);
 
-                    if (bJUMBO) {
+                    if (bJUMBO && !tilesetName.contains(QStringLiteral("JUMBOXL")) && !tilesetName.contains(QStringLiteral("JUMBOXXL"))) {
                         drawJumboTreeTile_Leaves(cell.tile, painter, baseTransform, x, y, m11, m12, m21, m22);
                     }
                 }
@@ -517,9 +519,10 @@ void ZLevelRenderer::drawTileLayerGroup(QPainter *painter, ZTileLayerGroup *laye
                         }
 
                         QString tilesetName = cell->tile->tileset()->name();
-                        bool bJUMBO = tilesetName.contains(QStringLiteral("JUMBO_"));
+                        QSize customSize = CustomTileSize::forTileset(tilesetName);
+                        bool bJUMBO = !customSize.isEmpty();
                         if (bJUMBO) {
-                            dx -= tileWidth / 2; // FIXME: Shouldn't Tiled::setZomboidTileOffset() take care of this? Possibly a TileScale=2 issue.
+                            dx -= (customSize.width() - 64) / 2; // tileWidth / 2; // FIXME: Shouldn't Tiled::setZomboidTileOffset() take care of this? Possibly a TileScale=2 issue.
                         } else if (tileWidth == tile->width() * 2) {
                             m11 *= 2.0f;
                             m22 *= 2.0f;
@@ -535,7 +538,7 @@ void ZLevelRenderer::drawTileLayerGroup(QPainter *painter, ZTileLayerGroup *laye
                             dy += tile->height() / 2;
                         }
 
-                        if (bJUMBO) {
+                        if (bJUMBO && !tilesetName.contains(QStringLiteral("JUMBOXL")) && !tilesetName.contains(QStringLiteral("JUMBOXXL"))) {
                             drawJumboTreeTile_Trunk(cell->tile, painter, baseTransform, x, y, m11, m12, m21, m22);
                         }
 
@@ -546,7 +549,7 @@ void ZLevelRenderer::drawTileLayerGroup(QPainter *painter, ZTileLayerGroup *laye
 
                         painter->drawImage(0, 0, img);
 
-                        if (bJUMBO) {
+                        if (bJUMBO && !tilesetName.contains(QStringLiteral("JUMBOXL")) && !tilesetName.contains(QStringLiteral("JUMBOXXL"))) {
                             drawJumboTreeTile_Leaves(cell->tile, painter, baseTransform, x, y, m11, m12, m21, m22);
                         }
                     }
@@ -797,7 +800,7 @@ void ZLevelRenderer::drawJumboTreeTile_Trunk(Tile *tile, QPainter *painter, cons
     const int tileWidth = DISPLAY_TILE_WIDTH;
     Tileset *tileset = tile->tileset();
     QString tilesetName = tileset->name();
-    for (int i = 0; i < sizeof(s_jumbo) / sizeof(JUMBO); i++) {
+    for (size_t i = 0; i < sizeof(s_jumbo) / sizeof(JUMBO); i++) {
         if (s_jumbo[i].bHasLeaves && tilesetName.startsWith(s_jumbo[i].tilesetName)) {
             Tile *tile2 = tileset->tileAt(columns * row_trunk + tile->id() % columns);
             QImage img = tile2->image();
@@ -824,7 +827,7 @@ void ZLevelRenderer::drawJumboTreeTile_Leaves(Tile *tile, QPainter *painter, con
     const int tileWidth = DISPLAY_TILE_WIDTH;
     Tileset *tileset = tile->tileset();
     QString tilesetName = tileset->name();
-    for (int i = 0; i < sizeof(s_jumbo) / sizeof(JUMBO); i++) {
+    for (size_t i = 0; i < sizeof(s_jumbo) / sizeof(JUMBO); i++) {
         if (s_jumbo[i].bHasLeaves && tilesetName.startsWith(s_jumbo[i].tilesetName)) {
             Tile *tile2 = tileset->tileAt(columns * row_summer + tile->id() % columns);
             QImage img = tile2->image();
