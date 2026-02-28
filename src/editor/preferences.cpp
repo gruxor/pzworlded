@@ -105,7 +105,8 @@ Preferences::Preferences()
     mShowLotFloorsOnly = mSettings->value(QLatin1String("ShowLotFloorsOnly"), false).toBool();
     mShowOtherWorlds = mSettings->value(QLatin1String("ShowOtherWorlds"), true).toBool();
     mUseOpenGL = mSettings->value(QLatin1String("OpenGL"), false).toBool();
-    mWorldThumbnails = mSettings->value(QLatin1String("WorldThumbnails"), false).toBool();
+    mLoadAllWorldThumbnails = mSettings->value(QLatin1String("LoadAllWorldThumbnails"), false).toBool();
+    mShowWorldThumbnails = mSettings->value(QLatin1String("ShowWorldThumbnails"), true).toBool();
     mShowAdjacentMaps = mSettings->value(QLatin1String("ShowAdjacentMaps"), true).toBool();
     mShowInvisibleTiles = mSettings->value(QLatin1String("ShowInvisibleTiles"), true).toBool();
     mTheme = mSettings->value(QLatin1String("Theme"), QLatin1String("Default")).toString();
@@ -308,15 +309,26 @@ void Preferences::setUseOpenGL(bool useOpenGL)
     emit useOpenGLChanged(mUseOpenGL);
 }
 
-void Preferences::setWorldThumbnails(bool thumbs)
+void Preferences::setLoadAllWorldThumbnails(bool thumbs)
 {
-    if (mWorldThumbnails == thumbs)
+    if (mLoadAllWorldThumbnails == thumbs)
         return;
 
-    mWorldThumbnails = thumbs;
-    mSettings->setValue(QLatin1String("Interface/WorldThumbnails"), mWorldThumbnails);
+    mLoadAllWorldThumbnails = thumbs;
+    mSettings->setValue(QLatin1String("Interface/LoadAllWorldThumbnails"), mLoadAllWorldThumbnails);
 
-    emit worldThumbnailsChanged(mWorldThumbnails);
+    emit loadAllWorldThumbnailsChanged(mLoadAllWorldThumbnails);
+}
+
+void Preferences::setShowWorldThumbnails(bool thumbs)
+{
+    if (mShowWorldThumbnails == thumbs)
+        return;
+
+    mShowWorldThumbnails = thumbs;
+    mSettings->setValue(QLatin1String("Interface/ShowWorldThumbnails"), mShowWorldThumbnails);
+
+    emit showWorldThumbnailsChanged(mShowWorldThumbnails);
 }
 
 QString Preferences::openFileDirectory() const

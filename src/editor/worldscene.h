@@ -143,6 +143,10 @@ public:
 
     void worldResized();
 
+    bool wantsImages() {
+        return mWantsImages;
+    }
+
 protected:
     void calcMapImageBounds();
     void calcLotImageBounds(int index);
@@ -531,7 +535,7 @@ public slots:
     void mapFileCreated(const QString &path);
     void mapImageChanged(MapImage *mapImage);
 
-    void worldThumbnailsChanged(bool thumbs);
+    void loadAllWorldThumbnailsChanged(bool thumbs);
     void handlePendingThumbnails();
 
 protected:

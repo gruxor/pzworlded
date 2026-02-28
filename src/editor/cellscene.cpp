@@ -7267,6 +7267,7 @@ void OverlappingLots::mapAboutToChange(MapInfo *mapInfo)
 
 void OverlappingLots::mapChanged(MapInfo *mapInfo)
 {
+    Q_UNUSED(mapInfo)
     int dbg = 1;
 }
 

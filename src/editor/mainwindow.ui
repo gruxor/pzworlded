@@ -323,6 +323,7 @@
     <addaction name="actionShowObjectNames"/>
     <addaction name="actionShowOtherWorlds"/>
     <addaction name="actionShowBMP"/>
+    <addaction name="actionShowWorldThumbnails"/>
     <addaction name="actionShowZombieSpawnImage"/>
     <addaction name="actionShowZonesInWorldView"/>
     <addaction name="separator"/>
@@ -1098,6 +1099,14 @@
   <action name="actionKeyboardShortcuts">
    <property name="text">
     <string>Keyboard Shortcuts...</string>
+   </property>
+  </action>
+  <action name="actionShowWorldThumbnails">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show World Thumbnails</string>
    </property>
   </action>
  </widget>

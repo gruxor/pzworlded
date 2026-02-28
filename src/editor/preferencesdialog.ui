@@ -194,7 +194,7 @@
           <item>
            <widget class="QCheckBox" name="thumbnails">
             <property name="text">
-             <string>Display map thumbnail images in the world view.
+             <string>Load all map thumbnails on startup.
 Don't check this if you are low on disk space or system memory.</string>
             </property>
            </widget>

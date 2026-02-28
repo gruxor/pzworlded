@@ -172,7 +172,9 @@ WorldScene::WorldScene(WorldDocument *worldDoc, QObject *parent)
             addItem(item);
             item->setZValue(ZVALUE_CELLITEM); // below mGridItem
             mCellItems[y * world()->width() + x] = item;
-            mPendingThumbnails += item;
+            if (Preferences::instance()->loadAllWorldThumbnails()) {
+                mPendingThumbnails += item;
+            }
         }
     }
 
@@ -194,8 +196,8 @@ WorldScene::WorldScene(WorldDocument *worldDoc, QObject *parent)
     connect(prefs, &Preferences::zombieSpawnImageOpacityChanged, this, &WorldScene::zombieSpawnImageOpacityChanged);
     connect(prefs, &Preferences::showZonesInWorldViewChanged, this, &WorldScene::setShowZonesInWorldView);
     connect(prefs, &Preferences::showOtherWorldsChanged, this, &WorldScene::setShowOtherWorlds);
-    connect(prefs, &Preferences::worldThumbnailsChanged,
-            this, &WorldScene::worldThumbnailsChanged);
+    connect(prefs, &Preferences::loadAllWorldThumbnailsChanged,
+            this, &WorldScene::loadAllWorldThumbnailsChanged);
 
     mPasteCellsTool = PasteCellsTool::instance();
 
@@ -218,7 +220,7 @@ WorldScene::WorldScene(WorldDocument *worldDoc, QObject *parent)
     connect(MapImageManager::instance(), &MapImageManager::mapImageChanged,
             this, &WorldScene::mapImageChanged);
 
-    if (Preferences::instance()->worldThumbnails()) {
+    if (Preferences::instance()->loadAllWorldThumbnails()) {
         PROGRESS_HIDER hider;
         LoadThumbnailsDialog dialog(this, MainWindow::instance());
         dialog.show();
@@ -582,11 +584,11 @@ void WorldScene::setShowBMPs(bool show)
     if (Preferences::instance()->showZonesInWorldView()) {
         show = false;
     }
-    for (WorldBMPItem *bmpItem : mBMPItems) {
+    for (WorldBMPItem *bmpItem : std::as_const(mBMPItems)) {
         bmpItem->setVisible(show);
     }
-    for (OtherWorld *otherWorld : mOtherWorlds) {
-        for (WorldBMPItem *item : otherWorld->mBMPItems) {
+    for (OtherWorld *otherWorld : std::as_const(mOtherWorlds)) {
+        for (WorldBMPItem *item : std::as_const(otherWorld->mBMPItems)) {
             item->setVisible(show && Preferences::instance()->showOtherWorlds());
         }
     }
@@ -595,11 +597,11 @@ void WorldScene::setShowBMPs(bool show)
 void WorldScene::setShowOtherWorlds(bool show)
 {
     QRectF bounds = mGridItem->boundingRect();
-    for (OtherWorld *otherWorld : mOtherWorlds) {
-        for (WorldBMPItem *item : otherWorld->mBMPItems) {
+    for (OtherWorld *otherWorld : std::as_const(mOtherWorlds)) {
+        for (WorldBMPItem *item : std::as_const(otherWorld->mBMPItems)) {
             item->setVisible(show && Preferences::instance()->showBMPs());
         }
-        for (OtherWorldCellItem *item : otherWorld->mCellItems) {
+        for (OtherWorldCellItem *item : std::as_const(otherWorld->mCellItems)) {
             item->setVisible(show && !mBMPToolActive);
         }
         if (show) {
@@ -719,7 +721,7 @@ void WorldScene::bmpAdded(int index)
     addItem(item);
     mBMPItems.insert(index, item);
     qreal zValue = 0.0;
-    for (WorldBMPItem *item2 : mBMPItems) {
+    for (WorldBMPItem *item2 : std::as_const(mBMPItems)) {
         item2->setZValue(zValue += 0.01);
     }
 }
@@ -734,7 +736,7 @@ void WorldScene::bmpAboutToBeRemoved(int index)
     removeItem(item);
     delete item;
     qreal zValue = 0.0;
-    for (WorldBMPItem *item2 : mBMPItems) {
+    for (WorldBMPItem *item2 : std::as_const(mBMPItems)) {
         item2->setZValue(zValue += 0.01);
     }
 }
@@ -780,7 +782,7 @@ void WorldScene::mapImageChanged(MapImage *mapImage)
     handlePendingThumbnails();
 }
 
-void WorldScene::worldThumbnailsChanged(bool thumbs)
+void WorldScene::loadAllWorldThumbnailsChanged(bool thumbs)
 {
     foreach (OtherWorld *otherWorld, mOtherWorlds) {
         otherWorld->mPendingThumbnails.clear();
@@ -794,9 +796,9 @@ void WorldScene::worldThumbnailsChanged(bool thumbs)
 
     mPendingThumbnails.clear();
     if (thumbs) {
-        foreach (WorldCellItem *item, mCellItems)
+        for (WorldCellItem *item : std::as_const(mCellItems)) {
             mPendingThumbnails += item;
-
+        }
         LoadThumbnailsDialog dialog(this, MainWindow::instance());
         dialog.show();
         int numThumbnails = mPendingThumbnails.size();
@@ -805,18 +807,15 @@ void WorldScene::worldThumbnailsChanged(bool thumbs)
             dialog.setPrompt(QStringLiteral("Loading thumbnails %1 / %2").arg(numThumbnails - mPendingThumbnails.size()).arg(numThumbnails));
             qApp->processEvents(QEventLoop::AllEvents);
         }
-
     } else {
-        foreach (WorldCellItem *item, mCellItems)
+        for (WorldCellItem *item : std::as_const(mCellItems)) {
             item->thumbnailsAreFail();
+        }
     }
 }
 
 void WorldScene::handlePendingThumbnails()
 {
-    if (!Preferences::instance()->worldThumbnails())
-        return;
-
     if (mPendingThumbnails.size()) {
         WorldCellItem *item = mPendingThumbnails.first();
         WorldCellItem::ThumbnailStatus status = item->thumbnailsAreGo();
@@ -829,7 +828,7 @@ void WorldScene::handlePendingThumbnails()
         }
     }
 
-    foreach (OtherWorld *otherWorld, mOtherWorlds) {
+    for (OtherWorld *otherWorld : std::as_const(mOtherWorlds)) {
         if (otherWorld->mPendingThumbnails.size()) {
             OtherWorldCellItem *item = otherWorld->mPendingThumbnails.first();
             WorldCellItem::ThumbnailStatus status = item->thumbnailsAreGo();
@@ -1014,7 +1013,7 @@ static QSize mapSize(int mapWidth, int mapHeight, int tileWidth, int tileHeight)
 BaseCellItem::BaseCellItem(WorldScene *scene, QGraphicsItem *parent)
     : QGraphicsItem(parent)
     , mScene(scene)
-    , mMapImage(0)
+    , mMapImage(nullptr)
     , mWantsImages(true)
 {
     setAcceptedMouseButtons(Qt::MouseButton::NoButton);
@@ -1051,17 +1050,19 @@ void BaseCellItem::paint(QPainter *painter,
 {
     Q_UNUSED(option)
 
-    if (mMapImage && mMapImage->isLoaded()) {
-        QRectF target = mMapImageBounds.translated(mDrawOffset);
-        QRectF source = QRect(QPoint(0, 0), mMapImage->image().size());
-        painter->drawImage(target, mMapImage->image(), source);
-    }
+    if (Preferences::instance()->showWorldThumbnails()) {
+        if (mMapImage && mMapImage->isLoaded()) {
+            QRectF target = mMapImageBounds.translated(mDrawOffset);
+            QRectF source = QRect(QPoint(0, 0), mMapImage->image().size());
+            painter->drawImage(target, mMapImage->image(), source);
+        }
 
-    foreach (const LotImage &lotImage, mLotImages) {
-        if (!lotImage.mMapImage || !lotImage.mMapImage->isLoaded()) continue;
-        QRectF target = lotImage.mBounds.translated(mDrawOffset);
-        QRectF source = QRect(QPoint(0, 0), lotImage.mMapImage->image().size());
-        painter->drawImage(target, lotImage.mMapImage->image(), source);
+        for (const LotImage &lotImage : std::as_const(mLotImages)) {
+            if (!lotImage.mMapImage || !lotImage.mMapImage->isLoaded()) continue;
+            QRectF target = lotImage.mBounds.translated(mDrawOffset);
+            QRectF source = QRect(QPoint(0, 0), lotImage.mMapImage->image().size());
+            painter->drawImage(target, lotImage.mMapImage->image(), source);
+        }
     }
 
 #ifndef QT_NO_DEBUG
@@ -1071,7 +1072,7 @@ void BaseCellItem::paint(QPainter *painter,
 
 void BaseCellItem::updateCellImage()
 {
-    mMapImage = 0;
+    mMapImage = nullptr;
     mMapImageBounds = QRect();
     if (mWantsImages && !mapFilePath().isEmpty()) {
 #ifndef QT_NO_DEBUG
@@ -1420,7 +1421,7 @@ void WorldCellItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 DragCellItem::DragCellItem(WorldCell *cell, WorldScene *scene, QGraphicsItem *parent)
     : WorldCellItem(cell, scene, parent)
 {
-    mWantsImages = Preferences::instance()->worldThumbnails();
+    mWantsImages = scene->itemForCell(cell)->wantsImages();
     initialize(); // again?!?!?!?!
 }
 
@@ -1508,7 +1509,7 @@ void DragMapImageItem::setScenePos(const QPointF &scenePos)
 {
     // scenePos is at the center of the item
     mDropPos = mScene->pixelToCellCoordsInt(scenePos);
-    mDrawOffset = mScene->cellToPixelCoords(mDropPos) - mScene->cellToPixelCoords(cellPos() + QPoint(0.5, 0.5));
+    mDrawOffset = mScene->cellToPixelCoords(mDropPos) - mScene->cellToPixelCoords(cellPos() + QPointF(0.5, 0.5));
     updateBoundingRect();
 }
 

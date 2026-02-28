@@ -1596,7 +1596,9 @@ void BuildingFloor::Square::ReplaceFurniture(BuildingTile *btile,
 
 void BuildingFloor::Square::ReplaceRoof(RoofObject *object, BuildingTileEntry *tile, int offset)
 {
-#if 0
+#if 1
+    Q_UNUSED(object)
+#else
     // XXX Reverted this since the non-30-degree dormers don't actually work where the InnerPt5/InnerOnePt5/InnerTwoPt5 overlap sloped roofs.
     // Placing a dormer onto a sloped roof should keep only the dormer tile.
     // FIXME: The reverse order doesn't work here, i.e. placing a sloped roof onto a dormer.

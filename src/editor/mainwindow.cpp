@@ -173,6 +173,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->actionShowObjectNames->setChecked(prefs->showObjectNames());
     ui->actionShowBMP->setChecked(prefs->showBMPs());
     ui->actionShowOtherWorlds->setChecked(prefs->showOtherWorlds());
+    ui->actionShowWorldThumbnails->setChecked(prefs->showWorldThumbnails());
     ui->actionShowZombieSpawnImage->setChecked(prefs->showZombieSpawnImage());
     ui->actionShowZonesInWorldView->setChecked(prefs->showZonesInWorldView());
     ui->actionHighlightCurrentLevel->setChecked(prefs->highlightCurrentLevel());
@@ -344,6 +345,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionShowObjects, &QAction::toggled, prefs, &Preferences::setShowObjects);
     connect(ui->actionShowObjectNames, &QAction::toggled, prefs, &Preferences::setShowObjectNames);
     connect(ui->actionShowOtherWorlds, &QAction::toggled, prefs, &Preferences::setShowOtherWorlds);
+    connect(ui->actionShowWorldThumbnails, &QAction::toggled, prefs, &Preferences::setShowWorldThumbnails);
     connect(ui->actionShowBMP, &QAction::toggled, prefs, &Preferences::setShowBMPs);
     connect(ui->actionShowZombieSpawnImage, &QAction::toggled, prefs, &Preferences::setShowZombieSpawnImage);
     connect(ui->actionShowZonesInWorldView, &QAction::toggled, prefs, &Preferences::setShowZonesInWorldView);
@@ -1558,7 +1560,7 @@ void MainWindow::addWorldObjectsFromLuaTable(Lua::LuaTable *regionsTable)
     const GenerateLotsSettings &gls = worldDoc->world()->getGenerateLotsSettings();
     worldDoc->undoStack()->beginMacro(tr("Read Objects from Lua"));
 
-    for (Lua::LuaTableKeyValue *kv : regionsTable->kv) {
+    for (Lua::LuaTableKeyValue *kv : std::as_const(regionsTable->kv)) {
         if (!kv->value.isTable()) {
             continue;
         }
@@ -1594,7 +1596,7 @@ void MainWindow::addWorldObjectsFromLuaTable(Lua::LuaTable *regionsTable)
                     continue;
                 }
                 points.resize(numPoints);
-                for (Lua::LuaTableKeyValue *kv : pointsTable->kv) {
+                for (Lua::LuaTableKeyValue *kv : std::as_const(pointsTable->kv)) {
                     if (!kv->key.isNumber() || !kv->value.isNumber()) {
                         continue;
                     }
@@ -1661,7 +1663,7 @@ void MainWindow::addWorldObjectsFromLuaTable(Lua::LuaTable *regionsTable)
         }
         if (Lua::LuaTable *propertiesTable = objectTable->getTable(QStringLiteral("properties"))) {
             PropertyList propertyList;
-            for (const Lua::LuaTableKeyValue *kv : propertiesTable->kv) {
+            for (const Lua::LuaTableKeyValue *kv : std::as_const(propertiesTable->kv)) {
                 if (!kv->key.isString()) {
                     continue;
                 }

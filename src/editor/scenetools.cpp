@@ -3208,10 +3208,14 @@ void WorldCellTool::showContextMenu(const QPointF &scenePos, const QPoint &scree
     QMenu menu;
     QIcon tiledIcon(QLatin1String(":images/tiled-icon-16.png"));
     QAction *openAction = menu.addAction(tiledIcon, tr("Open in TileZed"));
-    QAction *thumbnailAction = menu.addAction(tr("Recreate Thumbnail"));
+    QAction *showThumbnailAction = menu.addAction(tr("Show Thumbnail"));
+    showThumbnailAction->setCheckable(true);
+    showThumbnailAction->setChecked(item->wantsImages());
+    QAction *recreateThumbnailAction = menu.addAction(tr("Recreate Thumbnail"));
     if (item->cell()->mapFilePath().isEmpty()) {
         openAction->setEnabled(false);
-        thumbnailAction->setEnabled(false);
+        showThumbnailAction->setEnabled(false);
+        recreateThumbnailAction->setEnabled(false);
     }
 
     QAction *action = menu.exec(screenPos);
@@ -3219,8 +3223,32 @@ void WorldCellTool::showContextMenu(const QPointF &scenePos, const QPoint &scree
         QUrl url = QUrl::fromLocalFile(item->cell()->mapFilePath());
         QDesktopServices::openUrl(url);
     }
-    if (action == thumbnailAction) {
-        MapImageManager::instance()->recreateMapImage(item->mapFilePath());
+    if (mScene->worldDocument()->selectedCells().contains(item->cell())) {
+        for (WorldCell *cell : mScene->worldDocument()->selectedCells()) {
+            if (WorldCellItem *item2 = mScene->itemForCell(cell)) {
+                if (action == showThumbnailAction) {
+                    if (item2->wantsImages()) {
+                        item2->thumbnailsAreFail();
+                    } else {
+                        item2->thumbnailsAreGo();
+                    }
+                }
+                if (action == recreateThumbnailAction) {
+                    MapImageManager::instance()->recreateMapImage(item2->mapFilePath());
+                }
+            }
+        }
+    } else {
+        if (action == showThumbnailAction) {
+            if (item->wantsImages()) {
+                item->thumbnailsAreFail();
+            } else {
+                item->thumbnailsAreGo();
+            }
+        }
+        if (action == recreateThumbnailAction) {
+            MapImageManager::instance()->recreateMapImage(item->mapFilePath());
+        }
     }
 }
 

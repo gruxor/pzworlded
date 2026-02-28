@@ -80,8 +80,11 @@ public:
     bool useOpenGL() const { return mUseOpenGL; }
     void setUseOpenGL(bool useOpenGL);
 
-    bool worldThumbnails() const { return mWorldThumbnails; }
-    void setWorldThumbnails(bool thumbs);
+    bool loadAllWorldThumbnails() const { return mLoadAllWorldThumbnails; }
+    void setLoadAllWorldThumbnails(bool thumbs);
+
+    bool showWorldThumbnails() const { return mShowWorldThumbnails; }
+    void setShowWorldThumbnails(bool thumbs);
 
     bool showObjects() const { return mShowObjects; }
     bool showObjectNames() const { return mShowObjectNames; }
@@ -113,7 +116,8 @@ signals:
     void gridColorChanged(const QColor &gridColor);
 
     void useOpenGLChanged(bool useOpenGL);
-    void worldThumbnailsChanged(bool thumbs);
+    void loadAllWorldThumbnailsChanged(bool thumbs);
+    void showWorldThumbnailsChanged(bool show);
 
     void showObjectsChanged(bool show);
     void showObjectNamesChanged(bool show);
@@ -171,7 +175,8 @@ private:
     bool mShowCellGrid;
     QColor mGridColor;
     bool mUseOpenGL;
-    bool mWorldThumbnails;
+    bool mLoadAllWorldThumbnails;
+    bool mShowWorldThumbnails;
     bool mShowObjects;
     bool mShowObjectNames;
     bool mShowBMPs;
