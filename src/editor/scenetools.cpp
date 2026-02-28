@@ -3224,13 +3224,14 @@ void WorldCellTool::showContextMenu(const QPointF &scenePos, const QPoint &scree
         QDesktopServices::openUrl(url);
     }
     if (mScene->worldDocument()->selectedCells().contains(item->cell())) {
+        const bool wantsImages = !item->wantsImages();
         for (WorldCell *cell : mScene->worldDocument()->selectedCells()) {
             if (WorldCellItem *item2 = mScene->itemForCell(cell)) {
                 if (action == showThumbnailAction) {
-                    if (item2->wantsImages()) {
-                        item2->thumbnailsAreFail();
-                    } else {
+                    if (wantsImages) {
                         item2->thumbnailsAreGo();
+                    } else {
+                        item2->thumbnailsAreFail();
                     }
                 }
                 if (action == recreateThumbnailAction) {
