@@ -800,13 +800,13 @@ void BuildingFloor::LayoutToSquares()
                     }
                     case FurnitureTiles::LayerWallOverlay:
                         ReplaceFurniture(x + j, y + i, squares, ftile->tile(j, i),
-                                         (ftile->isW() || ftile->isN()) ? Square::SectionWallOverlay : Square::SectionWallOverlay3,
-                                         (ftile->isW() || ftile->isN()) ? Square::SectionWallOverlay2 : Square::SectionWallOverlay4);
+                                         (ftile->isW() || ftile->isN() || ftile->isNW()) ? Square::SectionWallOverlay : Square::SectionWallOverlay3,
+                                         (ftile->isW() || ftile->isN() || ftile->isNW()) ? Square::SectionWallOverlay2 : Square::SectionWallOverlay4);
                         break;
                     case FurnitureTiles::LayerWallFurniture:
                         ReplaceFurniture(x + j, y + i, squares, ftile->tile(j, i),
-                                         (ftile->isW() || ftile->isN()) ? Square::SectionWallFurniture : Square::SectionWallFurniture3,
-                                         (ftile->isW() || ftile->isN()) ? Square::SectionWallFurniture2 : Square::SectionWallFurniture4);
+                                         (ftile->isW() || ftile->isN() || ftile->isNW()) ? Square::SectionWallFurniture : Square::SectionWallFurniture3,
+                                         (ftile->isW() || ftile->isN() || ftile->isNW()) ? Square::SectionWallFurniture2 : Square::SectionWallFurniture4);
                         break;
                     case FurnitureTiles::LayerFrames: {
                         int dx = 0, dy = 0;
