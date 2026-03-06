@@ -30,6 +30,7 @@
 #include "preferences.h"
 #include "progress.h"
 #include "spawntooldialog.h"
+#include "thumbnailsettingsmgr.h"
 #include "toolmanager.h"
 #include "undoredo.h"
 #include "world.h"
@@ -3250,6 +3251,17 @@ void WorldCellTool::showContextMenu(const QPointF &scenePos, const QPoint &scree
         if (action == recreateThumbnailAction) {
             MapImageManager::instance()->recreateMapImage(item->mapFilePath());
         }
+    }
+    if (action == showThumbnailAction && !mScene->worldDocument()->fileName().isEmpty()) {
+        QSet<ThumbnailCell> visibleCells;
+        for (WorldCell *cell : mScene->world()->cells()) {
+            if (WorldCellItem *item2 = mScene->itemForCell(cell)) {
+                if (item2->wantsImages()) {
+                    visibleCells += ThumbnailCell(cell->x(), cell->y());
+                }
+            }
+        }
+        ThumbnailSettingsMgr::instance().saveWorld(mScene->worldDocument()->fileName(), visibleCells);
     }
 }
 

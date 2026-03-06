@@ -59,6 +59,7 @@
 #include "searchdock.h"
 #include "simplefile.h"
 #include "templatesdialog.h"
+#include "thumbnailsettingsmgr.h"
 #include "tilemetainfomgr.h"
 #include "tilesetmanager.h"
 #include "tmxtobmp.h"
@@ -978,6 +979,9 @@ bool MainWindow::InitConfigFiles()
                               .arg(BuildingTemplates::instance()->errorString()));
         return false;
     }
+
+    new ThumbnailSettingsMgr();
+    ThumbnailSettingsMgr::instance().readTxt();
 
     return true;
 }

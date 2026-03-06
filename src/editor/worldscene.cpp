@@ -28,6 +28,7 @@
 #include "preferences.h"
 #include "progress.h"
 #include "scenetools.h"
+#include "thumbnailsettingsmgr.h"
 #include "toolmanager.h"
 #include "undoredo.h"
 #include "world.h"
@@ -147,6 +148,9 @@ WorldScene::WorldScene(WorldDocument *worldDoc, QObject *parent)
                 _otherWorld->mBMPItems += item;
             }
 
+            QSet<ThumbnailCell> visibleCells;
+            ThumbnailSettingsMgr::instance().visibleCells(path, visibleCells);
+
             for (int y = 0; y < otherWorld->height(); y++) {
                 for (int x = 0; x < otherWorld->width(); x++) {
                     WorldCell *cell = otherWorld->cellAt(x, y);
@@ -155,7 +159,11 @@ WorldScene::WorldScene(WorldDocument *worldDoc, QObject *parent)
                     addItem(item);
                     item->setZValue(ZVALUE_CELLITEM); // below mGridItem
                     _otherWorld->mCellItems[y * otherWorld->width() + x] = item;
-                    _otherWorld->mPendingThumbnails += item;
+                    if (Preferences::instance()->loadAllWorldThumbnails()) {
+                        _otherWorld->mPendingThumbnails += item;
+                    } else if (visibleCells.contains(ThumbnailCell(cell->x(), cell->y()))) {
+                        _otherWorld->mPendingThumbnails += item;
+                    }
                 }
             }
 
@@ -163,6 +171,9 @@ WorldScene::WorldScene(WorldDocument *worldDoc, QObject *parent)
                 setSceneRect(sceneRect().united(boundingRect(_otherWorld->adjustedBounds(world()))));
         }
     }
+
+    QSet<ThumbnailCell> visibleCells;
+    ThumbnailSettingsMgr::instance().visibleCells(worldDocument()->fileName(), visibleCells);
 
     mCellItems.resize(world()->width() * world()->height());
     for (int y = 0; y < world()->height(); y++) {
@@ -173,6 +184,8 @@ WorldScene::WorldScene(WorldDocument *worldDoc, QObject *parent)
             item->setZValue(ZVALUE_CELLITEM); // below mGridItem
             mCellItems[y * world()->width() + x] = item;
             if (Preferences::instance()->loadAllWorldThumbnails()) {
+                mPendingThumbnails += item;
+            } else if (visibleCells.contains(ThumbnailCell(cell->x(), cell->y()))) {
                 mPendingThumbnails += item;
             }
         }
@@ -230,6 +243,8 @@ WorldScene::WorldScene(WorldDocument *worldDoc, QObject *parent)
             dialog.setPrompt(QStringLiteral("Loading thumbnails %1 / %2").arg(numThumbnails - mPendingThumbnails.size()).arg(numThumbnails));
             qApp->processEvents(QEventLoop::AllEvents);
         }
+    } else {
+        handlePendingThumbnails();
     }
 }
 

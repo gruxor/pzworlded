@@ -94,6 +94,8 @@ SOURCES += main.cpp\
     shortcut/shortcuteditordelegate.cpp \
     shortcut/shortcuteditormodel.cpp \
     shortcut/shortcuteditorwidget.cpp \
+    thumbnailsettingsfile.cpp \
+    thumbnailsettingsmgr.cpp \
     tiledeftextfile.cpp \
     tilesetstxtfile.cpp \
     worldview.cpp \
@@ -220,6 +222,8 @@ HEADERS  += mainwindow.h \
     shortcut/shortcuteditordelegate.h \
     shortcut/shortcuteditormodel.h \
     shortcut/shortcuteditorwidget.h \
+    thumbnailsettingsfile.h \
+    thumbnailsettingsmgr.h \
     tiledeftextfile.h \
     tilesetstxtfile.h \
     worldconstants.h \
