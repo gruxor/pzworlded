@@ -370,7 +370,7 @@ bool MapToPNGFile::read(const QString &filePath, MapToPNGFileSettings &settings,
         mError = simpleFile.errorString();
         return false;
     }
-    for (SimpleFileBlock block : simpleFile.blocks) {
+    for (const SimpleFileBlock& block : std::as_const(simpleFile.blocks)) {
         SimpleFileKeyValue kv;
         if (block.name == QLatin1String("rule")) {
             MapToPNGFileRule rule;

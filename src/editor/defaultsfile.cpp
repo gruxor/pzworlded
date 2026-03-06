@@ -37,15 +37,15 @@ void DefaultsFile::newWorld(World *world)
         return;
     }
 
-    for (PropertyEnum* propEnum : file.mEnums)
+    for (PropertyEnum* propEnum : std::as_const(file.mEnums))
         world->insertPropertyEnum(world->propertyEnums().size(), propEnum);
-    for (PropertyDef* propDef : file.mPropertyDefs)
+    for (PropertyDef* propDef : std::as_const(file.mPropertyDefs))
         world->addPropertyDefinition(world->propertyDefinitions().size(), propDef);
-    for (PropertyTemplate* propTemplate : file.mTemplates)
+    for (PropertyTemplate* propTemplate : std::as_const(file.mTemplates))
         world->addPropertyTemplate(world->propertyTemplates().size(), propTemplate);
-    for (ObjectType* objType : file.mObjectTypes)
+    for (ObjectType* objType : std::as_const(file.mObjectTypes))
         world->insertObjectType(world->objectTypes().size(), objType);
-    for (WorldObjectGroup* objGroup : file.mObjectGroups) {
+    for (WorldObjectGroup* objGroup : std::as_const(file.mObjectGroups)) {
         if (objGroup->type()->isNull())
             objGroup->setType(world->nullObjectType());
         world->insertObjectGroup(world->objectGroups().size(), objGroup);
@@ -69,7 +69,7 @@ void DefaultsFile::oldWorld(World *world)
         return;
     }
 
-    for (PropertyEnum* propEnum : file.mEnums) {
+    for (PropertyEnum* propEnum : std::as_const(file.mEnums)) {
         PropertyEnum* oldEnum = world->propertyEnums().find(propEnum->name());
         if (oldEnum == nullptr) {
             world->insertPropertyEnum(world->propertyEnums().size(), propEnum);
@@ -79,13 +79,13 @@ void DefaultsFile::oldWorld(World *world)
         }
     }
 
-    for (PropertyDef* propDef : file.mPropertyDefs) {
+    for (PropertyDef* propDef : std::as_const(file.mPropertyDefs)) {
         if (propDef->mEnum != nullptr) {
             propDef->mEnum = world->propertyEnums().find(propDef->mEnum->name());
         }
     }
 
-    for (PropertyDef* propDef : file.mPropertyDefs) {
+    for (PropertyDef* propDef : std::as_const(file.mPropertyDefs)) {
         PropertyDef* oldDef = world->propertyDefinition(propDef->mName);
         if (oldDef == nullptr) {
             world->addPropertyDefinition(world->propertyDefinitions().size(), propDef);
@@ -96,14 +96,14 @@ void DefaultsFile::oldWorld(World *world)
         }
     }
 
-    for (PropertyTemplate* propTemplate : file.mTemplates) {
+    for (PropertyTemplate* propTemplate : std::as_const(file.mTemplates)) {
         PropertyTemplate* oldTemplate = world->propertyTemplate(propTemplate->mName);
         if (oldTemplate == nullptr) {
             world->addPropertyTemplate(world->propertyTemplates().size(), propTemplate);
         }
     }
 
-    for (PropertyTemplate* propTemplate : file.mTemplates) {
+    for (PropertyTemplate* propTemplate : std::as_const(file.mTemplates)) {
         PropertyTemplate* oldTemplate = world->propertyTemplate(propTemplate->mName);
         if (oldTemplate != propTemplate) {
             oldTemplate->mDescription = propTemplate->mDescription;
@@ -119,14 +119,14 @@ void DefaultsFile::oldWorld(World *world)
         }
     }
 
-    for (ObjectType* objType : file.mObjectTypes) {
+    for (ObjectType* objType : std::as_const(file.mObjectTypes)) {
         ObjectType* oldType = world->objectType(objType->name());
         if (oldType == nullptr) {
             world->insertObjectType(world->objectTypes().size(), objType);
         }
     }
 
-    for (WorldObjectGroup* objGroup : file.mObjectGroups) {
+    for (WorldObjectGroup* objGroup : std::as_const(file.mObjectGroups)) {
         objGroup->setType(world->objectType(objGroup->type()->name()));
         WorldObjectGroup* oldGroup = world->objectGroups().find(objGroup->name());
         if (oldGroup == nullptr) {
