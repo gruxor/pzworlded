@@ -145,6 +145,9 @@ private:
     friend class MapManager;
 };
 
+extern QString MISSING_TILESETS_PROPERTY;
+extern QString MISSING_TILESETS_SEPARATOR;
+
 class MapManager : public QObject
 {
     Q_OBJECT

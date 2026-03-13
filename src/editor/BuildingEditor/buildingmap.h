@@ -185,6 +185,9 @@ public:
 
     bool isTilesetUsed(Tiled::Tileset *tileset);
 
+    QSet<QString> missingTilesets() const
+    { return mMissingTilesets; }
+
 public:
     void buildingRotated();
     void buildingResized();
@@ -260,6 +263,8 @@ private:
     QMap<BuildingFloor*,QRegion> pendingSquaresToTileLayers; // BuildingSquaresToTileLayers
     QSet<BuildingFloor*> pendingEraseUserTiles; // TileLayer::erase on all user-tile layers
     QMap<BuildingFloor*,QMap<QString,QRegion> > pendingUserTilesToLayer; // floorTilesToLayer
+
+    QSet<QString> mMissingTilesets;
 };
 
 } // namespace BuildingEditor

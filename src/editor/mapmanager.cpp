@@ -58,6 +58,9 @@ using namespace Tiled;
 using namespace Tiled::Internal;
 using namespace BuildingEditor;
 
+QString MISSING_TILESETS_PROPERTY = QStringLiteral("MISSING_TILESETS");
+QString MISSING_TILESETS_SEPARATOR = QStringLiteral(",,,");
+
 MapManager *MapManager::mInstance = nullptr;
 
 MapManager *MapManager::instance()
@@ -826,6 +829,15 @@ void MapManager::buildingLoadedByThread(Building *building, MapInfo *mapInfo)
     bmap.addRoomDefObjects(map);
 
     map->setProperties(building->properties());
+
+    // This is a hack to return the missing tileset names for the building, for use by LotFilesManager256.
+    // Missing tiles are replaced by TilesetManager.missingTile() instead of an identifiable missing tileset's tile.
+    QSet<QString> missingTilesetNameSet = bmap.missingTilesets();
+    if (!missingTilesetNameSet.isEmpty()) {
+        QStringList missingTilesetNames(missingTilesetNameSet.cbegin(), missingTilesetNameSet.cend());
+        missingTilesetNames.sort();
+        map->setProperty(MISSING_TILESETS_PROPERTY, missingTilesetNames.join(MISSING_TILESETS_SEPARATOR));
+    }
 
     delete building;
 

@@ -920,7 +920,12 @@ bool LotFilesWorker256::generateCell()
     // Check for missing tilesets.
     for (MapComposite *mc : mapComposite->maps()) {
         if (mc->map()->hasUsedMissingTilesets()) {
-            mError = tr("Some tilesets are missing in a map in cell %1,%2:\n%3").arg(cell256X).arg(cell256Y).arg(mc->mapInfo()->path());
+            if (mc->mapInfo()->path().endsWith(QStringLiteral(".tbx"), Qt::CaseInsensitive)) {
+                QString tilesetsHelp = QStringLiteral("Add missing tilesets to TileZed's list of tilesets.");
+                mError = tr("Some tilesets are missing in a map in cell %1,%2:\n%3\n%4\n%5").arg(cell256X).arg(cell256Y).arg(mc->mapInfo()->path()).arg(tilesetsHelp).arg(missingTilesetsString(mc->map()));
+            } else {
+                mError = tr("Some tilesets are missing in a map in cell %1,%2:\n%3\n%4").arg(cell256X).arg(cell256Y).arg(mc->mapInfo()->path()).arg(missingTilesetsString(mc->map()));
+            }
             mStatus = Status::Error;
 //            qApp->processEvents(QEventLoop::ProcessEventsFlag::ExcludeUserInputEvents); // handle any pending signal-to-slot before moving threads
             mCombinedCellMaps->moveToThread(mCombinedCellMaps->mMapComposite, qApp->thread());
@@ -1927,6 +1932,32 @@ void LotFilesWorker256::resolveProperties(PropertyHolder *ph, PropertyList &resu
         result.removeAll(p->mDefinition);
         result += p;
     }
+}
+
+QString LotFilesWorker256::missingTilesetsString(Tiled::Map *map)
+{
+    QStringList tilesetNames;
+    QString property = map->property(MISSING_TILESETS_PROPERTY);
+    if (property.isEmpty()) {
+        // A .tmx
+        QSet<QString> tilesetNameSet;
+        for (Tiled::Tileset *tileset : map->usedTilesets()) {
+            if (tileset->isMissing()) {
+                tilesetNameSet += tileset->name();
+            }
+        }
+        tilesetNames = QStringList(tilesetNameSet.cbegin(), tilesetNameSet.cend());
+    } else {
+        // A .tbx
+        tilesetNames = property.split(MISSING_TILESETS_SEPARATOR);
+    }
+    if (tilesetNames.isEmpty()) {
+        return QString();
+    }
+    QString result;
+    tilesetNames.sort();
+    result += QStringLiteral("    ");
+    return tilesetNames.join(QStringLiteral("\n    "));
 }
 
 void LotFilesWorker256::addJob()

@@ -879,6 +879,8 @@ void BuildingMap::userTilesToLayer(BuildingFloor *floor,
                 if (BuildingTilesMgr::parseTileName(tileName, tilesetName, index)) {
                     if (tilesetByName.contains(tilesetName)) {
                         tile = tilesetByName[tilesetName]->tileAt(index);
+                    } else {
+                        mMissingTilesets += tilesetName;
                     }
                 }
             }

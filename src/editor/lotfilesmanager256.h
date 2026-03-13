@@ -90,6 +90,7 @@ public:
     bool processObjectGroups(CombinedCellMaps &combinedMaps, MapComposite *mapComposite);
     bool processObjectGroup(CombinedCellMaps &combinedMaps, Tiled::ObjectGroup *objectGroup, int levelOffset, const QPoint &offset);
     void resolveProperties(PropertyHolder *ph, PropertyList &result);
+    QString missingTilesetsString(Tiled::Map *map);
 
 //    const QString tr(const char *str) const;
 
