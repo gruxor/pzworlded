@@ -76,7 +76,8 @@ int main(int argc, char *argv[])
     TilesetManager::instance()->waitForTilesets(TilesetManager::instance()->tilesets(), &w);
     progress.release();
 
-    w.openLastFiles();
+    if (Preferences::instance()->LoadLastActivProject())
+        w.openLastFiles();
 
 #if 1
     int ret = a.exec();

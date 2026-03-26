@@ -90,10 +90,7 @@ public:
     RoadTypeModel *model() const
     { return mModel; }
 
-    QSize sizeHint() const override { return QSize((64+2)*3, 128+2); }
-
-    void setDocument(Document *doc);
-    void clearDocument();
+    QSize sizeHint() const override { return QSize((128+2)*3, 256+2); }
 
     void selectTileForRoad(Road *road);
 

@@ -91,8 +91,10 @@ public:
                          QWidget *)
     {
         QColor gridColor = Preferences::instance()->gridColor();
-        mScene->renderer()->drawGrid(painter, option->exposedRect, gridColor,
-                                     mScene->document()->currentLevel());
+            mScene->renderer()->drawGrid(painter, option->exposedRect, gridColor,
+                             mScene->document()->currentLevel(),
+                             Preferences::instance()->gridOpacity(),
+                             Preferences::instance()->gridWidth());
     }
 
     void updateBoundingRect()

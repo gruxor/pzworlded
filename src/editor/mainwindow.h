@@ -155,6 +155,7 @@ public slots:
     void generateInGameMapBuildingFeatures();
     void generateInGameMapTreeFeatures();
     void generateInGameMapWaterFeatures();
+    void generateInGameMapRoadFeatures();
     void removeInGameMapFeatures();
     void splitInGameMapPolygon();
     void convertInGameMapPolylineToPolygon();
@@ -189,6 +190,8 @@ public slots:
     void lootInspector();
 
     void readOldWaterDotLua();
+    void BiomeMapGenerator();
+    void showAboutDialog();
 
 private:
     void FromToAux(bool selectedOnly);

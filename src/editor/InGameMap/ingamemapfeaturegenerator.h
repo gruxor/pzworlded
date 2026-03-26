@@ -44,7 +44,8 @@ public:
     enum FeatureType {
         FeatureBuilding,
         FeatureTree,
-        FeatureWater
+        FeatureWater,
+        FeatureRoad
     };
     struct GenerateCellFailure
     {
@@ -70,12 +71,18 @@ private:
     bool doBuildings(WorldCell *cell, MapInfo *mapInfo);
     bool processObjectGroups(WorldCell *cell, MapComposite *mapComposite);
     bool processObjectGroup(WorldCell *cell, Tiled::ObjectGroup *objectGroup, int levelOffset, const QPoint &offset);
+    bool processObjectGroupNew(WorldCell* cell, Tiled::ObjectGroup* objectGroup, int levelOffset, const QPoint& offset);
     bool processObjectGroup(WorldCell *cell, MapInfo *mapInfo, Tiled::ObjectGroup *objectGroup, int levelOffset, const QPoint &offset, QRect &bounds, QVector<QRect> &rects);
     bool traceBuildingOutline(WorldCell *cell, MapInfo *mapInfo, QRect &bounds, QVector<QRect> &rects);
     bool isInvalidBuildingPolygon(const QPolygon &poly);
     bool doWater(WorldCell* cell, MapInfo* mapInfo);
     bool doTrees(WorldCell* cell, MapInfo *mapInfo);
 
+    bool doRoadMain(WorldCell* cell, MapInfo* mapInfo);
+    bool doRoadSecondary(WorldCell* cell, MapInfo* mapInfo);
+    bool doRoadTertiary(WorldCell* cell, MapInfo* mapInfo);
+    bool doRoadTrail(WorldCell* cell, MapInfo* mapInfo);
+    bool doRailroad(WorldCell* cell, MapInfo* mapInfo);
 private:
     WorldDocument *mWorldDoc;
     QString mError;

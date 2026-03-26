@@ -212,27 +212,28 @@ void IsoWorldGridItem::paint(QPainter *painter,
 {
 #if 1
     QColor gridColor(Qt::black);
-//    gridColor.setAlpha(128);
+    gridColor.setAlpha(0);
 
     QPen gridPen(gridColor);
     gridPen.setCosmetic(true);
     painter->setPen(gridPen);
 
-    int startX = mScene->world()->MetaGrid->minx;
-    int endX = mScene->world()->MetaGrid->maxx + 1;
-    int startY = mScene->world()->MetaGrid->miny;
-    int endY = mScene->world()->MetaGrid->maxy + 1;
+    int startX = mScene->world()->MetaGrid->minx - 100; // Étendre de 10 tuiles à gauche
+    int endX = mScene->world()->MetaGrid->maxx + 100;  // Étendre de 10 tuiles à droite
+    int startY = mScene->world()->MetaGrid->miny - 100; // Étendre de 10 tuiles en haut
+    int endY = mScene->world()->MetaGrid->maxy + 100;  // Étendre de 10 tuiles en bas
+
 
     const IsoConstants &isoConstants = mScene->world()->isoConstants;
 
     for (int y = startY; y <= endY; ++y) {
-        const QPointF start = mScene->renderer()->tileToPixelCoords(startX * isoConstants.SQUARES_PER_CELL, y * isoConstants.SQUARES_PER_CELL, 0);
-        const QPointF end = mScene->renderer()->tileToPixelCoords(endX * isoConstants.SQUARES_PER_CELL, y * isoConstants.SQUARES_PER_CELL, 0);
+        const QPointF start = mScene->renderer()->tileToPixelCoords(startX * 4096, y * 4096, 0);
+        const QPointF end = mScene->renderer()->tileToPixelCoords(endX * 4096, y * 4096, 0);
         painter->drawLine(start, end);
     }
     for (int x = startX; x <= endX; ++x) {
-        const QPointF start = mScene->renderer()->tileToPixelCoords(x * isoConstants.SQUARES_PER_CELL, startY * isoConstants.SQUARES_PER_CELL, 0);
-        const QPointF end = mScene->renderer()->tileToPixelCoords(x * isoConstants.SQUARES_PER_CELL, endY * isoConstants.SQUARES_PER_CELL, 0);
+        const QPointF start = mScene->renderer()->tileToPixelCoords(x * 4096, startY * 4096, 0);
+        const QPointF end = mScene->renderer()->tileToPixelCoords(x * 4096, endY * 4096, 0);
         painter->drawLine(start, end);
     }
 #else
@@ -253,7 +254,7 @@ void IsoWorldGridItem::paint(QPainter *painter,
     QColor gridColor(Qt::black);
 //    gridColor.setAlpha(128);
 
-    QPen gridPen(gridColor);
+    QPen gridPen();
     painter->setPen(gridPen);
 
     for (int y = startY; y <= endY; ++y) {
@@ -380,6 +381,9 @@ void LotPackScene::setWorld(IsoWorld *world)
         addItem(item);
 
     setSceneRect(mRenderer->boundingRect(mWorld->tileBounds()));
+    QRectF extendedBounds = mRenderer->boundingRect(mWorld->tileBounds());
+    extendedBounds.adjust(-500, -500, 500, 500); // Étendre la zone de 500 pixels
+    setSceneRect(extendedBounds);
 
     mDarkRectangle->setRect(sceneRect());
     addItem(mDarkRectangle);
@@ -408,7 +412,8 @@ void LotPackScene::showRoomDefs(bool show)
 
 void LotPackScene::highlightCurrentLevel()
 {
-    int max = mWorld->CurrentCell->maxLevel;
+    int max = 31; //mWorld->CurrentCell->maxLevel;
+    int min = -32; //mWorld->CurrentCell->minLevel;
     bool hi = Preferences::instance()->highlightCurrentLevel();
     if (hi)
         max = qMin(max, mCurrentLevel);
@@ -416,8 +421,9 @@ void LotPackScene::highlightCurrentLevel()
     foreach (LotPackLayerGroupItem *item, mLayerGroupItems) {
         if (hi && item->level() == mCurrentLevel)
             mDarkRectangle->setZValue(item->zValue() - 0.1);
-        item->setVisible(item->level() >= 0 && item->level() <= max);
+        item->setVisible(item->level() >= min && item->level() <= max);
     }
+
     for (int z = 0; z < mRoomDefGroups.size(); z++)
         mRoomDefGroups[z]->setVisible(mShowRoomDefs &&
                                       (!hi || (z - WORLD_GROUND_LEVEL == mCurrentLevel)));
@@ -451,7 +457,7 @@ LotPackView::LotPackView(QWidget *parent) :
     setScene(mScene);
 
     QVector<qreal> factors;
-    factors << 0.12 << 0.25 << 0.33 << 0.5 << 0.75 << 1.0 << 1.5 << 2.0;
+    factors << 0.02 << 0.05 << 0.10 << 0.12 << 0.15 << 0.20 << 0.25 << 0.33 << 0.5 << 0.75 << 1.0 << 1.5 << 2.0;
     zoomable()->setZoomFactors(factors);
 
     zoomable()->setScale(0.25);
@@ -631,6 +637,7 @@ LotPackWindow::LotPackWindow(QWidget *parent) :
     keys = QKeySequence::keyBindings(QKeySequence::ZoomOut);
     keys += QKeySequence(tr("-"));
     ui->actionZoomOut->setShortcuts(keys);
+    ui->actionSaveScreenshot->setShortcut(QKeySequence(tr("F12")));
 
     mView->zoomable()->connectToComboBox(ui->scaleCombo);
     connect(mView->zoomable(), &Zoomable::scaleChanged, this, &LotPackWindow::updateZoom);
@@ -641,7 +648,7 @@ LotPackWindow::LotPackWindow(QWidget *parent) :
     connect(ui->actionZoomIn, &QAction::triggered, this, &LotPackWindow::zoomIn);
     connect(ui->actionZoomOut, &QAction::triggered, this, &LotPackWindow::zoomOut);
     connect(ui->actionZoomNormal, &QAction::triggered, this, &LotPackWindow::zoomNormal);
-
+    connect(ui->actionSaveScreenshot, SIGNAL(triggered()), SLOT(saveScreenshot()));
     connect(ui->actionShowMiniMap, &QAction::toggled,
             prefs, &Preferences::setShowMiniMap);
     connect(ui->actionShowRoomDefs, &QAction::toggled,
@@ -782,6 +789,16 @@ void LotPackWindow::closeWorld()
         delete mWorld;
         mWorld = 0;
     }
+}
+
+void LotPackWindow::saveScreenshot()
+{
+    //Uses Qpixmap::grabWidget function to create a pixmap and paints the QGraphicsView inside it.
+    QPixmap pixMap = QPixmap::grabWidget(mView);
+    char buf[256];
+    sprintf(buf, "screenshot_%i_%i.png", mView->mTilePos.x(), mView->mTilePos.y());
+    QString fileName = QString::fromUtf8(buf);
+    pixMap.save(fileName);
 }
 
 void LotPackWindow::zoomIn()

@@ -37,6 +37,8 @@ public:
 private slots:
     void browseTilesDirectory();
     void themeChanged(int index);
+    void browseTileZedPath();
+    void resetThumbWidth(); 
     void gridColorChanged(const QColor &gridColor);
 
     void accept();
@@ -45,6 +47,7 @@ private:
     Ui::PreferencesDialog *ui;
     WorldDocument *mWorldDoc;
     QString mTilesDirectory;
+    QString mTileZedPath;
     QColor mGridColor;
 };
 

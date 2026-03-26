@@ -76,6 +76,7 @@
 #include "writespawnpointsdialog.h"
 #include "writeworldobjectsdialog.h"
 #include "zoomable.h"
+#include "biomemapgeneratorDialog.h"
 
 #include "InGameMap/ingamemapfeaturegenerator.h"
 #include "InGameMap/ingamemapdock.h"
@@ -138,6 +139,7 @@ MainWindow::MainWindow(QWidget *parent)
     , mObjectGroupMenu(new QMenu(this))
     , mZoomable(0)
     , mLotPackWindow(0)
+    , mSettings(QDir::currentPath() + QLatin1String("/settings.ini"), QSettings::IniFormat)
 {
     ui->setupUi(this);
 
@@ -323,6 +325,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionGenerateInGameMapBuildingFeatures, &QAction::triggered, this, &MainWindow::generateInGameMapBuildingFeatures);
     connect(ui->actionGenerateInGameMapTreeFeatures, &QAction::triggered, this, &MainWindow::generateInGameMapTreeFeatures);
     connect(ui->actionGenerateInGameMapWaterFeatures, &QAction::triggered, this, &MainWindow::generateInGameMapWaterFeatures);
+    connect(ui->actionGenerateInGameMapRoadFeatures, &QAction::triggered, this, &MainWindow::generateInGameMapRoadFeatures);
     connect(ui->actionRemoveInGameMapFeatures, &QAction::triggered, this, &MainWindow::removeInGameMapFeatures);
     connect(ui->actionRemoveInGameMapPoints, &QAction::triggered, this, &MainWindow::removeInGameMapPoint);
     connect(ui->actionSplitInGameMapPolygon, &QAction::triggered, this, &MainWindow::splitInGameMapPolygon);
@@ -363,6 +366,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionLotPackViewer, &QAction::triggered, this, &MainWindow::lotpackviewer);
     connect(ui->actionLootInspector, &QAction::triggered, this, &MainWindow::lootInspector);
 //    connect(ui->actionReadOldWaterDotLua, &QAction::triggered, this, &MainWindow::readOldWaterDotLua);
+    connect(ui->actionGenerate_BiomeMap, &QAction::triggered, this, &MainWindow::BiomeMapGenerator);
+    connect(ui->actionAbout_WorldEd_Unofficial, &QAction::triggered, this, &MainWindow::showAboutDialog);
 
     connect(ui->actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
 
@@ -382,9 +387,9 @@ MainWindow::MainWindow(QWidget *parent)
     toolManager->registerTool(WorldCellTool::instance(), mActionManager, CONTEXT_TOOL, CATEGORY_TOOL_WORLD, QStringLiteral(""));
     toolManager->registerTool(PasteCellsTool::instance(), mActionManager, CONTEXT_TOOL, CATEGORY_TOOL_WORLD, QStringLiteral(""));
 #ifdef ROAD_UI
-    toolManager->registerTool(WorldSelectMoveRoadTool::instance());
-    toolManager->registerTool(WorldCreateRoadTool::instance());
-    toolManager->registerTool(WorldEditRoadTool::instance());
+    toolManager->registerTool(WorldSelectMoveRoadTool::instance(), mActionManager, CONTEXT_TOOL, CATEGORY_TOOL_WORLD, QStringLiteral(""));
+    toolManager->registerTool(WorldCreateRoadTool::instance(), mActionManager, CONTEXT_TOOL, CATEGORY_TOOL_WORLD, QStringLiteral(""));
+    toolManager->registerTool(WorldEditRoadTool::instance(), mActionManager, CONTEXT_TOOL, CATEGORY_TOOL_WORLD, QStringLiteral(""));
 #endif
     toolManager->registerTool(WorldBMPTool::instance(), mActionManager, CONTEXT_TOOL, CATEGORY_TOOL_WORLD, QStringLiteral(""));
     toolManager->addSeparator();
@@ -408,9 +413,9 @@ MainWindow::MainWindow(QWidget *parent)
     new RoomToneTool;
     toolManager->registerTool(RoomToneTool::instancePtr(), mActionManager, CONTEXT_TOOL, CATEGORY_TOOL_OBJECT, QStringLiteral(""));
 #ifdef ROAD_UI
-    toolManager->registerTool(CellSelectMoveRoadTool::instance());
-    toolManager->registerTool(CellCreateRoadTool::instance());
-    toolManager->registerTool(CellEditRoadTool::instance());
+    toolManager->registerTool(CellSelectMoveRoadTool::instance(), mActionManager, CONTEXT_TOOL, CATEGORY_TOOL_CELL, QStringLiteral(""));
+    toolManager->registerTool(CellCreateRoadTool::instance(), mActionManager, CONTEXT_TOOL, CATEGORY_TOOL_CELL, QStringLiteral(""));
+    toolManager->registerTool(CellEditRoadTool::instance(), mActionManager, CONTEXT_TOOL, CATEGORY_TOOL_CELL, QStringLiteral(""));
 #endif
     new CreateInGameMapPointTool;
     new CreateInGameMapPolygonTool;
@@ -512,7 +517,7 @@ void MainWindow::changeEvent(QEvent *event)
 
 void MainWindow::retranslateUi()
 {
-    setWindowTitle(tr("PZWorldEd"));
+    setWindowTitle(tr("PZWorldEd Unofficial Fork (Unified Build)"));
 }
 
 void MainWindow::newWorld()
@@ -673,8 +678,8 @@ void MainWindow::currentDocumentChanged(Document *doc)
             connect(cellDoc->worldDocument(), &WorldDocument::generateLotSettingsChanged,
                     this, &MainWindow::generateLotSettingsChanged);
 #ifdef ROAD_UI
-            connect(cellDoc->worldDocument(), SIGNAL(selectedRoadsChanged()),
-                    SLOT(updateActions()));
+            connect(cellDoc->worldDocument(), &WorldDocument::selectedRoadsChanged,
+                    this, &MainWindow::updateActions);
 #endif
             connect(cellDoc, &CellDocument::selectedInGameMapFeaturesChanged, this, &MainWindow::updateActions);
             connect(cellDoc, &CellDocument::selectedInGameMapPointsChanged, this, &MainWindow::updateActions);
@@ -690,8 +695,8 @@ void MainWindow::currentDocumentChanged(Document *doc)
             connect(worldDoc, &WorldDocument::generateLotSettingsChanged,
                     this, &MainWindow::generateLotSettingsChanged);
 #ifdef ROAD_UI
-            connect(worldDoc, SIGNAL(selectedRoadsChanged()),
-                    SLOT(updateActions()));
+            connect(worldDoc, &WorldDocument::selectedRoadsChanged,
+                    this, &MainWindow::updateActions);
 #endif
             connect(worldDoc, &WorldDocument::selectedBMPsChanged,
                     this, &MainWindow::updateActions);
@@ -1182,6 +1187,16 @@ void MainWindow::lootInspector()
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
         LootWindow::instance().setDocument(mCurrentDocument);
     }
+}
+
+void MainWindow::BiomeMapGenerator() {
+
+    WorldDocument *worldDoc = mCurrentDocument->asWorldDocument();
+    if (!worldDoc)
+        worldDoc = mCurrentDocument->asCellDocument()->worldDocument();
+    biomemapgeneratorDialog d(worldDoc->world(), this);
+    d.exec();
+
 }
 
 #include "waterflow.h"
@@ -1725,7 +1740,7 @@ void MainWindow::updateWindowTitle()
     else {
         fileName = QDir::toNativeSeparators(fileName);
     }
-    setWindowTitle(tr("[*]%1 - WorldEd").arg(fileName));
+    setWindowTitle(tr("[*]%1 - WorldEd Unofficial Fork (Unified Build)").arg(fileName));
     setWindowFilePath(fileName);
     bool isModified = mCurrentDocument ? mCurrentDocument->isModified() : false;
     if (mCurrentDocument && mCurrentDocument->isCellDocument())
@@ -2421,6 +2436,20 @@ void MainWindow::generateInGameMapWaterFeatures()
     if (auto* worldDoc = mCurrentDocument->asWorldDocument()) {
         InGameMapFeatureGenerator generator;
         generator.generateWorld(worldDoc, InGameMapFeatureGenerator::GenerateSelected, InGameMapFeatureGenerator::FeatureWater);
+    }
+}
+
+void MainWindow::generateInGameMapRoadFeatures()
+{
+    if (auto* cellDoc = mCurrentDocument->asCellDocument()) {
+        cellDoc->worldDocument()->setSelectedCells(QList<WorldCell*>() << cellDoc->cell());
+        InGameMapFeatureGenerator generator;
+        generator.generateWorld(cellDoc->worldDocument(), InGameMapFeatureGenerator::GenerateSelected, InGameMapFeatureGenerator::FeatureRoad);
+    }
+
+    if (auto* worldDoc = mCurrentDocument->asWorldDocument()) {
+        InGameMapFeatureGenerator generator;
+        generator.generateWorld(worldDoc, InGameMapFeatureGenerator::GenerateSelected, InGameMapFeatureGenerator::FeatureRoad);
     }
 }
 
@@ -3189,6 +3218,7 @@ void MainWindow::updateActions()
     ui->actionGenerateInGameMapBuildingFeatures->setEnabled(selectedCells);
     ui->actionGenerateInGameMapTreeFeatures->setEnabled(selectedCells);
     ui->actionGenerateInGameMapWaterFeatures->setEnabled(selectedCells);
+    ui->actionGenerateInGameMapRoadFeatures->setEnabled(selectedCells);
     ui->actionRemoveInGameMapFeatures->setEnabled(((worldDoc != nullptr) && (worldDoc->selectedInGameMapFeatureCount() > 0)) ||
                                                (cellDoc != nullptr && cellDoc->selectedInGameMapFeatures().isEmpty() == false));
     ui->actionRemoveInGameMapPoints->setEnabled(canRemoveInGameMapPoint());
@@ -3268,6 +3298,26 @@ void MainWindow::updateActions()
         ui->objectGroupButton->setText(tr("Obj Grp: <none> "));
         ui->objectGroupButton->setEnabled(false);
     }
+}
+
+void MainWindow::showAboutDialog()
+{
+    QString aboutText = QLatin1String(
+        "<h2>Unofficial Mapping Tools</h2>"
+        "<p>This is an unofficial fork of the <b>PZWorldEd</b> editor for the game <b>Project Zomboid</b>.</p>"
+        "<p><b>Important:</b> This tool is not affiliated with or endorsed by <b>The Indie Stone</b> or the developers of <b>Project Zomboid</b>.</p>"
+        "<p><b>Disclaimer:</b> This version may contain bugs, some of which may be identical to the official version. "
+        "The goal of this fork is to add features and functionalities that are currently absent from the original version.</p>"
+        "<p><b>Note:</b> Use at your own risk. The developers are not responsible for any issues that may arise.</p>"
+        "<p><b>Contact:</b> If you have any questions or suggestions, feel free to post them on the <a href=\"https://discord.gg/CFuNM8rtCp\">PZ Unofficial Mapping Discord</a>.</p>"
+    );
+
+    QMessageBox aboutBox;
+    aboutBox.setWindowTitle(tr("About Unofficial Mapping Tools"));
+    aboutBox.setText(aboutText);
+    aboutBox.setIcon(QMessageBox::Information);
+    aboutBox.setTextFormat(Qt::RichText);  // Ensures that the HTML tags are interpreted properly
+    aboutBox.exec();
 }
 
 void MainWindow::updateZoom()

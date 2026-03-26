@@ -51,6 +51,7 @@
 #include <QMenu>
 #include <QUndoStack>
 #include <QUrl>
+#include <QProcess>
 
 using namespace Tiled;
 
@@ -981,7 +982,13 @@ void SubMapTool::showContextMenu(const QPointF &scenePos, const QPoint &screenPo
             QAction *action = menu.exec(screenPos);
             if (action == openAction) {
                 QUrl url = QUrl::fromLocalFile(subMap->mapInfo()->path());
-                QDesktopServices::openUrl(url);
+                if (url.isValid()) {
+                    QString filePath = url.toLocalFile(); // Convertir QUrl en QString
+                    QString programPath = QDir::currentPath() + QLatin1String("/../TileD/TileZed.exe"); // Chemin de l'exécutable
+
+                    // Lancer le programme avec le fichier en argument
+                    QProcess::startDetached(programPath, QStringList() << filePath);
+                }
             }
         }
         return;
@@ -3222,7 +3229,17 @@ void WorldCellTool::showContextMenu(const QPointF &scenePos, const QPoint &scree
     QAction *action = menu.exec(screenPos);
     if (action == openAction) {
         QUrl url = QUrl::fromLocalFile(item->cell()->mapFilePath());
-        QDesktopServices::openUrl(url);
+        if (url.isValid()) {
+            QString filePath = url.toLocalFile(); // Convertir QUrl en QString
+            QString programPath = QDir::currentPath() + QLatin1String("/../TileD/TileZed.exe"); // Chemin de l'exécutable
+
+            // Récupérer le répertoire contenant l'exécutable
+            QFileInfo programInfo(programPath);
+            QString workingDirectory = programInfo.absolutePath();
+
+            // Lancer le programme avec le fichier en argument et définir le répertoire de travail
+            QProcess::startDetached(programPath, QStringList() << filePath, workingDirectory);
+        }
     }
     if (mScene->worldDocument()->selectedCells().contains(item->cell())) {
         const bool wantsImages = !item->wantsImages();

@@ -242,7 +242,7 @@ void InGameMapImageDialog::cellToImage(QImage &image, const QString &mapDirector
             in >> pos;
             buffer.seek(pos);
             int skip = 0;
-            for (int z = header->minLevel; z <= 0; ++z) { // z=0 only
+            for (int z = header->minLevel; z <= 32; ++z) { // z=0 only
                 for (int x = 0; x < SQUARES_PER_CHUNK; ++x) {
                     for (int y = 0; y < SQUARES_PER_CHUNK; ++y) {
                         if (skip > 0) {

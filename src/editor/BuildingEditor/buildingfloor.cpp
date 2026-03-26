@@ -1770,6 +1770,9 @@ TileDefWatcher::TileDefWatcher() :
     connect(mWatcher, &FileSystemWatcher::fileChanged, this, &TileDefWatcher::fileChanged);
 #ifdef WORLDED
     preferencesChanged(Preferences::instance()->tilePropertiesFiles());
+    connect(Preferences::instance(), &Preferences::tileZedPathChanged, this, [this]() {
+        preferencesChanged(Preferences::instance()->tilePropertiesFiles());
+    });
 #else
     connect(Preferences::instance(), &Preferences::tilePropertiesFilesChanged, this, &TileDefWatcher::preferencesChanged);
     preferencesChanged(Tiled::Internal::Preferences::instance()->tilePropertiesFiles());

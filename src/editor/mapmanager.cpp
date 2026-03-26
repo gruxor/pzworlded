@@ -89,7 +89,7 @@ MapManager::MapManager() :
     connect(mFileSystemWatcher, &FileSystemWatcher::fileChanged,
             this, &MapManager::fileChanged);
 
-    mChangedFilesTimer.setInterval(500);
+    mChangedFilesTimer.setInterval(200);
     mChangedFilesTimer.setSingleShot(true);
     connect(&mChangedFilesTimer, &QTimer::timeout,
             this, &MapManager::fileChangedTimeout);
@@ -97,7 +97,7 @@ MapManager::MapManager() :
     qRegisterMetaType<MapInfo*>("BuildingEditor::Building*");
     qRegisterMetaType<MapInfo*>("MapInfo*");
 
-    mMapReaderThread.resize(4);
+    mMapReaderThread.resize(16);
     mMapReaderWorker.resize(mMapReaderThread.size());
     for (int i = 0; i < mMapReaderThread.size(); i++) {
         mMapReaderThread[i] = new InterruptibleThread;

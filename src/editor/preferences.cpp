@@ -19,6 +19,7 @@
 
 #include <QApplication>
 #include <QDir>
+#include <QDirIterator>
 #include <QSettings>
 #include <QTextStream>
 
@@ -79,7 +80,7 @@ bool Preferences::highlightCurrentLevel() const
 
 Preferences::Preferences()
     : QObject()
-    , mSettings(new QSettings)
+    , mSettings(new QSettings(QDir::currentPath() + QLatin1String("/settings.ini"), QSettings::IniFormat))
 {
     // Retrieve interface settings
     mSettings->beginGroup(QLatin1String("Interface"));
@@ -110,47 +111,56 @@ Preferences::Preferences()
     mShowAdjacentMaps = mSettings->value(QLatin1String("ShowAdjacentMaps"), true).toBool();
     mShowInvisibleTiles = mSettings->value(QLatin1String("ShowInvisibleTiles"), true).toBool();
     mTheme = mSettings->value(QLatin1String("Theme"), QLatin1String("Default")).toString();
+
+    // Unofficial Fork - begin
+    mLoadLastActivProject = mSettings->value(QLatin1String("LoadLastActivProject"), true).toBool();
+    mhsThresholdHP = mSettings->value(QLatin1String("HsThresholdHP"), 1000).toInt();
+    mhsSizeHP = mSettings->value(QLatin1String("HsSizeHP"), 40).toInt();
+    mhsThresholdHT = mSettings->value(QLatin1String("HsThresholdHT"), 1000).toInt();
+    mhsSizeHT = mSettings->value(QLatin1String("HsSizeHT"), 40).toInt();
+    mhsThresholdR = mSettings->value(QLatin1String("HsThresholdR"), 1000).toInt();
+    mhsSizeR = mSettings->value(QLatin1String("HsSizeR"), 40).toInt();
+
+    mGridOpacity = mSettings->value(QLatin1String("GridOpacity"), 128).toInt();
+    mGridWidth = mSettings->value(QLatin1String("GridWidth"), 1).toInt();
+    mThumbWidth = mSettings->value(QLatin1String("ThumbWidth"), 512).toInt();
+
+    QString tileZedPath = mSettings->value(QLatin1String("TileZedPath")).toString();
+    if (tileZedPath.isEmpty() || !QDir(tileZedPath).exists()) {
+        tileZedPath = QDir::currentPath() + QLatin1String("/../TileZed");
+    }
+    mTileZedPath = mSettings->value(QLatin1String("TileZedPath"), tileZedPath).toString();
+    // Unofficial Fork - end
+
     mSettings->endGroup();
 
     mSettings->beginGroup(QLatin1String("MapsDirectory"));
     mMapsDirectory = mSettings->value(QLatin1String("Current"), QString()).toString();
     mSettings->endGroup();
 
+    mSettings->beginGroup(QLatin1String("TileZed"));
+
     // Set the default location of the Tiles Directory to the same value set
     // in TileZed's Tilesets Dialog.
-    QSettings settings(QLatin1String("TheIndieStone"), QLatin1String("TileZed"));
-    QString KEY_TILES_DIR = QLatin1String("Tilesets/TilesDirectory");
-    QString tilesDirectory = settings.value(KEY_TILES_DIR).toString();
+    QString tilesDirectory = mSettings->value(QLatin1String("TilesDirectory")).toString();
 
     if (tilesDirectory.isEmpty() || !QDir(tilesDirectory).exists()) {
-        tilesDirectory = QCoreApplication::applicationDirPath() +
+        tilesDirectory = QDir::currentPath() +
                 QLatin1Char('/') + QLatin1String("../Tiles");
-        if (!QDir(tilesDirectory).exists())
-            tilesDirectory = QCoreApplication::applicationDirPath() +
-                    QLatin1Char('/') + QLatin1String("../../Tiles");
     }
-    if (tilesDirectory.length())
-        tilesDirectory = QDir::cleanPath(tilesDirectory);
-    if (!QDir(tilesDirectory).exists())
-        tilesDirectory.clear();
     mTilesDirectory = mSettings->value(QLatin1String("TilesDirectory"),
                                        tilesDirectory).toString();
 
     // Use the same .tiles files as TileZed
-    mTilePropertiesFiles = settings.value(QLatin1String("TilePropertiesFiles")).toStringList();
+    mTilePropertiesFiles = propertiesFromTZPath(mTileZedPath);
 
     mOpenFileDirectory = mSettings->value(QLatin1String("OpenFileDirectory")).toString();
     mWorldMapXMLFile = mSettings->value(QLatin1String("WorldMapXMLFile")).toString();
 
-    // Use the same directory as TileZed.
-    QString KEY_CONFIG_PATH = QLatin1String("ConfigDirectory");
-    QString configPath = settings.value(KEY_CONFIG_PATH).toString();
-    if (configPath.isEmpty())
-        configPath = QDir::homePath() + QLatin1Char('/') + QLatin1String(".TileZed");
-    mConfigDirectory = configPath;
 
     // Use the same directory as TileZed.
-    mThumbnailsDirectory = settings.value(QLatin1String("Thumbnails/Directory")).toString();
+    mThumbnailsDirectory = mSettings->value(QLatin1String("Thumbnails/Directory")).toString();
+    mSettings->endGroup();
 }
 
 Preferences::~Preferences()
@@ -160,8 +170,7 @@ Preferences::~Preferences()
 
 QString Preferences::userPath() const
 {
-    QString userPath = QDir::homePath() + QLatin1Char('/') + QLatin1String(".TileZed");
-    return userPath;
+    return configPath();
 }
 
 QString Preferences::userPath(const QString &fileName) const
@@ -171,7 +180,7 @@ QString Preferences::userPath(const QString &fileName) const
 
 QString Preferences::configPath() const
 {
-    return mConfigDirectory;
+    return mTileZedPath + QLatin1String("/.TileZed");
 }
 
 QString Preferences::configPath(const QString &fileName) const
@@ -341,7 +350,7 @@ void Preferences::setOpenFileDirectory(const QString &path)
     if (mOpenFileDirectory == path)
         return;
     mOpenFileDirectory = path;
-    mSettings->setValue(QLatin1String("OpenFileDirectory"), mOpenFileDirectory);
+    mSettings->setValue(QLatin1String("TileZed/OpenFileDirectory"), mOpenFileDirectory);
 }
 
 QString Preferences::worldMapXMLFile() const
@@ -354,7 +363,7 @@ void Preferences::setWorldMapXMLFile(const QString &path)
     if (mWorldMapXMLFile == path)
         return;
     mWorldMapXMLFile = path;
-    mSettings->setValue(QLatin1String("WorldMapXMLFile"), mWorldMapXMLFile);
+    mSettings->setValue(QLatin1String("TileZed/WorldMapXMLFile"), mWorldMapXMLFile);
 }
 
 void Preferences::setShowAdjacentMaps(bool show)
@@ -522,7 +531,7 @@ void Preferences::setTilesDirectory(const QString &path)
     if (mTilesDirectory == path)
         return;
     mTilesDirectory = path;
-    mSettings->setValue(QLatin1String("TilesDirectory"), path);
+    mSettings->setValue(QLatin1String("TileZed/TilesDirectory"), path);
     emit tilesDirectoryChanged();
 }
 
@@ -583,3 +592,143 @@ void Preferences::applyTheme() const
         theme_file.close();
     }
 }
+
+// Unofficial Fork - begin
+void Preferences::setTileZedPath(const QString &path)
+{
+    if (mTileZedPath == path)
+        return;
+    mTileZedPath = path;
+    mTilePropertiesFiles = propertiesFromTZPath(mTileZedPath);
+    mSettings->setValue(QLatin1String("Interface/TileZedPath"), mTileZedPath);
+    emit tileZedPathChanged();
+}
+
+void Preferences::setLoadLastActivProject(bool show)
+{
+    if (mLoadLastActivProject == show)
+        return;
+
+    mLoadLastActivProject = show;
+    mSettings->setValue(QLatin1String("Interface/LoadLastActivProject"), mLoadLastActivProject);
+
+    emit LoadLastActivProject(mLoadLastActivProject);
+}
+
+void Preferences::setHsThresholdHP(int threshold)
+{
+
+    if (mhsThresholdHP == threshold)
+        return;
+
+    mhsThresholdHP = threshold;
+    mSettings->setValue(QLatin1String("Interface/HsThresholdHP"), mhsThresholdHP);
+    emit HsThresholdHP(threshold);
+}
+
+void Preferences::setHsSizeHP(int size)
+{
+    if (mhsSizeHP == size)
+        return;
+
+    mhsSizeHP = size;
+    mSettings->setValue(QLatin1String("Interface/HsSizeHP"), mhsSizeHP);
+    emit HsSizeHP(size);
+}
+
+void Preferences::setHsThresholdHT(int threshold)
+{
+
+    if (mhsThresholdHT == threshold)
+        return;
+
+    mhsThresholdHT = threshold;
+    mSettings->setValue(QLatin1String("Interface/HsThresholdHT"), mhsThresholdHT);
+    emit HsThresholdHT(threshold);
+}
+
+void Preferences::setHsSizeHT(int size)
+{
+    if (mhsSizeHT == size)
+        return;
+
+    mhsSizeHT = size;
+    mSettings->setValue(QLatin1String("Interface/HsSizeHT"), mhsSizeHT);
+    emit HsSizeHT(size);
+}
+
+void Preferences::setHsThresholdR(int threshold)
+{
+
+    if (mhsThresholdR == threshold)
+        return;
+
+    mhsThresholdR = threshold;
+    mSettings->setValue(QLatin1String("Interface/HsThresholdR"), mhsThresholdR);
+    emit HsThresholdR(threshold);
+}
+
+void Preferences::setHsSizeR(int size)
+{
+    if (mhsSizeR == size)
+        return;
+
+    mhsSizeR = size;
+    mSettings->setValue(QLatin1String("Interface/HsSizeR"), mhsSizeR);
+    emit HsSizeR(size);
+}
+
+void Preferences::setGridOpacity(int newOpacity)
+{
+    if (mGridOpacity == newOpacity)
+        return;
+    mGridOpacity = newOpacity;
+    mSettings->setValue(QLatin1String("Interface/GridOpacity"), mGridOpacity);
+    emit gridOpacityChanged(mGridOpacity);
+}
+
+void Preferences::setGridWidth(int newWidth)
+{
+    if (mGridWidth == newWidth)
+        return;
+    mGridWidth = newWidth;
+    mSettings->setValue(QLatin1String("Interface/GridWidth"), mGridWidth);
+    emit gridWidthChanged(mGridWidth);
+}
+
+void Preferences::setThumbWidth(int newWidth)
+{
+    if (mThumbWidth == newWidth)
+        return;
+    mThumbWidth = newWidth;
+    mSettings->setValue(QLatin1String("Interface/ThumbWidth"), mThumbWidth);
+    emit thumbWidthChanged(mThumbWidth);
+}
+
+QStringList Preferences::propertiesFromTZPath(const QString &tileZedPath)
+{
+    QStringList result;
+
+    auto addIfExists = [&result](const QString &filePath) {
+        QFileInfo fileInfo(filePath);
+        if (fileInfo.exists() && fileInfo.isFile()) {
+            const QString canonicalPath = fileInfo.canonicalFilePath();
+            if (!canonicalPath.isEmpty() && !result.contains(canonicalPath)) {
+                result += canonicalPath;
+            }
+        }
+    };
+
+    addIfExists(QDir(tileZedPath).filePath(QLatin1String("newtiledefinitions.tiles")));
+
+    if (result.isEmpty()) {
+        QDirIterator it(tileZedPath, QStringList() << QLatin1String("*.tiles"), QDir::Files, QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            addIfExists(it.next());
+        }
+    }
+
+    return result;
+}
+
+// Unofficial Fork - end

@@ -63,6 +63,8 @@ RCC_DIR = .rcc
 OBJECTS_DIR = .obj
 
 SOURCES += main.cpp\
+    ImageProcessor.cpp \
+    biomemapgeneratorDialog.cpp \
     BuildingEditor/buildingfurniturefile.cpp \
     BuildingEditor/buildingtilesfile.cpp \
     exportlotsprogressdialog.cpp \
@@ -195,6 +197,8 @@ HEADERS  += mainwindow.h \
     BuildingEditor/buildingfurniturefile.h \
     BuildingEditor/buildingtilesfile.h \
     exportlotsprogressdialog.h \
+    ImageProcessor.h \
+    biomemapgeneratorDialog.h \
     generatelotsfailuredialog.h \
     InGameMap/clipper.hpp \
     InGameMap/ingamemapcell.h \
@@ -320,6 +324,7 @@ HEADERS  += mainwindow.h \
     waterflow.h
 
 FORMS    += mainwindow.ui \
+    biomemapgenerator.ui \
     exportlotsprogressdialog.ui \
     generatelotsfailuredialog.ui \
     InGameMap/ingamemapimagedialog.ui \

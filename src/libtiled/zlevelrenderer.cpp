@@ -170,7 +170,7 @@ AddRemoveMapObject::removeObject
     return path;
 }
 
-void ZLevelRenderer::drawGrid(QPainter *painter, const QRectF &rect, QColor gridColor, int level) const
+void ZLevelRenderer::drawGrid(QPainter *painter, const QRectF &rect, QColor gridColor, int level, int opacity, int width) const
 {
     const int tileWidth = map()->tileWidth();
     const int tileHeight = map()->tileHeight();
@@ -186,12 +186,11 @@ void ZLevelRenderer::drawGrid(QPainter *painter, const QRectF &rect, QColor grid
     const int endY = qMin(qreal(map()->height()),
                           pixelToTileCoords(r.bottomLeft(), level).y());
 
-    gridColor.setAlpha(128);
+    gridColor.setAlpha(opacity);
 
     QPen pen;
     pen.setCosmetic(true);
-    qreal scaleX = painter->transform().m11();
-    pen.setWidthF(std::max(scaleX, 1.0));
+    pen.setWidth(width);
     QBrush brush(gridColor, Qt::Dense4Pattern);
     brush.setTransform(QTransform::fromScale(1/painter->transform().m11(),
                                              1/painter->transform().m22()));

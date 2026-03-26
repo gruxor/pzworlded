@@ -57,7 +57,7 @@ public:
     QPainterPath shape(const MapObject *object) const override;
 
 #ifdef ZOMBOID
-    void drawGrid(QPainter *painter, const QRectF &rect, QColor grid, int level = 0) const override;
+    void drawGrid(QPainter *painter, const QRectF &rect, QColor grid, int level = 0, int opacity = 128, int width = 1) const override;
 #else
     void drawGrid(QPainter *painter, const QRectF &rect, QColor grid) const;
 #endif

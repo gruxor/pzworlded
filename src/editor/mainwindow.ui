@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>PZWorldEd</string>
+   <string>PZWorldEd Unofficial Fork</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_4">
@@ -238,8 +238,14 @@
      <string>File</string>
     </property>
     <widget class="QMenu" name="menuGenerate_Lots">
+     <property name="toolTip">
+      <string>Generate map for Project Zomboid B41 with 300x300 cells</string>
+     </property>
      <property name="title">
-      <string>Generate Lots 10x10</string>
+      <string>Generate Lots 10x10 (B41)</string>
+     </property>
+     <property name="toolTipsVisible">
+      <bool>true</bool>
      </property>
      <addaction name="actionGenerateLotsAll"/>
      <addaction name="actionGenerateLotsSelected"/>
@@ -259,8 +265,14 @@
      <addaction name="actionTMXToBMPSelected"/>
     </widget>
     <widget class="QMenu" name="menuGenerate_Lots_8x8">
+     <property name="toolTip">
+      <string>Generate map for Project Zomboid B42 with 256x256 cells</string>
+     </property>
      <property name="title">
-      <string>Generate Lots 8x8</string>
+      <string>Generate Lots 8x8 (B42)</string>
+     </property>
+     <property name="toolTipsVisible">
+      <bool>true</bool>
      </property>
      <addaction name="actionGenerateLotsAll8x8"/>
      <addaction name="actionGenerateLotsSelected8x8"/>
@@ -296,6 +308,8 @@
      <string>Help</string>
     </property>
     <addaction name="actionAboutQt"/>
+    <addaction name="separator"/>
+    <addaction name="actionAbout_WorldEd_Unofficial"/>
    </widget>
    <widget class="QMenu" name="editMenu">
     <property name="title">
@@ -400,6 +414,7 @@
     <addaction name="actionGenerateInGameMapBuildingFeatures"/>
     <addaction name="actionGenerateInGameMapTreeFeatures"/>
     <addaction name="actionGenerateInGameMapWaterFeatures"/>
+    <addaction name="actionGenerateInGameMapRoadFeatures"/>
     <addaction name="separator"/>
     <addaction name="actionReadInGameMapFeaturesXML"/>
     <addaction name="actionWriteInGameMapFeaturesXML"/>
@@ -410,6 +425,12 @@
     <addaction name="actionCreateWorldImage"/>
     <addaction name="actionCreateImagePyramid"/>
    </widget>
+   <widget class="QMenu" name="menuBiomeMap">
+    <property name="title">
+     <string>BiomeMap</string>
+    </property>
+    <addaction name="actionGenerate_BiomeMap"/>
+   </widget>
    <addaction name="fileMenu"/>
    <addaction name="editMenu"/>
    <addaction name="menuView"/>
@@ -417,6 +438,7 @@
    <addaction name="menuCell"/>
    <addaction name="menuInGameMap"/>
    <addaction name="menuTools"/>
+   <addaction name="menuBiomeMap"/>
    <addaction name="helpMenu"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -1073,6 +1095,21 @@
    </property>
    <property name="toolTip">
     <string>Selected Cells</string>
+   </property>
+  </action>
+  <action name="actionAbout_WorldEd_Unofficial">
+   <property name="text">
+    <string>About WorldEd Unofficial</string>
+   </property>
+  </action>
+  <action name="actionGenerateInGameMapRoadFeatures">
+   <property name="text">
+    <string>Generate Road Features</string>
+   </property>
+  </action>
+  <action name="actionGenerate_BiomeMap">
+   <property name="text">
+    <string>Generate BiomeMap</string>
    </property>
   </action>
   <action name="actionCreateFeatureImage">

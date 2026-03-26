@@ -107,6 +107,34 @@ public:
     QString theme() const { return mTheme; }
     void applyTheme() const;
 
+        // Unofficial Fork - begin
+    int hsThresholdHP() const { return mhsThresholdHP; }
+    int hsSizeHP() const { return mhsSizeHP; }
+    int hsThresholdHT() const { return mhsThresholdHT; }
+    int hsSizeHT() const { return mhsSizeHT; }
+    int hsThresholdR() const { return mhsThresholdR; }
+    int hsSizeR() const { return mhsSizeR; }
+    int gridOpacity() const { return mGridOpacity;}
+    int gridWidth() const { return mGridWidth; }
+    int thumbWidth() const { return mThumbWidth; }
+    QString tileZedPath() const { return mTileZedPath; }
+    void setTileZedPath(const QString &path);
+    bool LoadLastActivProject() const { return mLoadLastActivProject; }
+    int GridOpacity() const { return mGridOpacity;  }
+    int GridWidth() const { return mGridWidth;  }
+    int ThumbWidth() const { return mThumbWidth;  }
+    void setLoadLastActivProject(bool show);
+    void setHsThresholdHP(int threshold);
+    void setHsSizeHP(int size);
+    void setHsThresholdHT(int threshold);
+    void setHsSizeHT(int size);
+    void setHsThresholdR(int threshold);
+    void setHsSizeR(int size);
+    void setGridOpacity(int newOpacity);
+    void setGridWidth(int newWidth);
+    void setThumbWidth(int newWidth);
+    // Unofficial Fork - end
+
 signals:
     void snapToGridChanged(bool snapToGrid);
     void showCellBorderChanged(bool showGrid);
@@ -127,7 +155,7 @@ signals:
     void showZonesInWorldViewChanged(bool show);
 
 #define MINIMAP_WIDTH_MIN 128
-#define MINIMAP_WIDTH_MAX 512
+#define MINIMAP_WIDTH_MAX 1024
     void showMiniMapChanged(bool show);
     void miniMapWidthChanged(int width);
 
@@ -139,6 +167,20 @@ signals:
     void showLotFloorsOnlyChanged(bool show);
     void showOtherWorldsChanged(bool show);
     void showInvisibleTilesChanged(bool show);
+
+    // Unofficial Fork - begin
+    void LoadLastActivProject(bool show);
+    void HsThresholdHP(int threshold);
+    void HsSizeHP(int size);
+    void HsThresholdHT(int threshold);
+    void HsSizeHT(int size);
+    void HsThresholdR(int threshold);
+    void HsSizeR(int size);
+    void gridOpacityChanged(int newOpacity);
+    void gridWidthChanged(int newWidth);
+    void thumbWidthChanged(int newWidth);
+    void tileZedPathChanged();
+    // Unofficial Fork - end
 
 public slots:
     void setSnapToGrid(bool snapToGrid);
@@ -186,7 +228,6 @@ private:
     bool mShowZonesInWorldView;
     int mMiniMapWidth;
     bool mHighlightCurrentLevel;
-    QString mConfigDirectory;
     QString mMapsDirectory;
     QString mTilesDirectory;
     QStringList mTilePropertiesFiles;
@@ -199,6 +240,21 @@ private:
     QString mThumbnailsDirectory;
     bool mShowInvisibleTiles;
     QString mTheme;
+
+    // Unofficial Fork - begin
+    int mGridOpacity;
+    int mGridWidth;
+    int mThumbWidth;
+    bool mLoadLastActivProject;
+    int mhsThresholdHP;
+    int mhsSizeHP;
+    int mhsThresholdHT;
+    int mhsSizeHT;
+    int mhsThresholdR;
+    int mhsSizeR;
+    QString mTileZedPath;
+    static QStringList propertiesFromTZPath(const QString &tileZedPath);
+    // Unofficial Fork - end
 
     static Preferences *mInstance;
 };
