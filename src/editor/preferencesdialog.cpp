@@ -24,6 +24,7 @@
 #include <QFileDialog>
 #include <QStringList>
 #include <QDir>
+#include <QStyleFactory>
 
 PreferencesDialog::PreferencesDialog(WorldDocument *worldDoc, QWidget *parent)
     : QDialog(parent)
@@ -35,6 +36,9 @@ PreferencesDialog::PreferencesDialog(WorldDocument *worldDoc, QWidget *parent)
     Preferences *prefs = Preferences::instance();
 
     connect(ui->themeCombo, qOverload<int>(&QComboBox::currentIndexChanged), this, &PreferencesDialog::themeChanged);
+    connect(ui->fusionStyleMode, &QAbstractButton::toggled, this, &PreferencesDialog::fusionStyleModeToggled);
+    connect(ui->vistaStyleMode, &QAbstractButton::toggled, this, &PreferencesDialog::vistaStyleModeToggled);
+    connect(ui->windowsStyleMode, &QAbstractButton::toggled, this, &PreferencesDialog::windowsStyleModeToggled);
 
     mTilesDirectory = prefs->tilesDirectory();
     ui->tilesDirectory->setText(QDir::toNativeSeparators(mTilesDirectory));
@@ -56,7 +60,15 @@ PreferencesDialog::PreferencesDialog(WorldDocument *worldDoc, QWidget *parent)
     ui->showAdjacent->setChecked(prefs->showAdjacentMaps());
     ui->zombieSpawnImageOpacity->setValue(int(prefs->zombieSpawnImageOpacity() * 100));
 
-    ui->themeCombo->setCurrentText(Preferences::instance()->theme());
+    ui->themeCombo->setCurrentText(prefs->theme());
+    if (prefs->styleMode().compare(QLatin1String("fusion"), Qt::CaseInsensitive) == 0) {
+        ui->fusionStyleMode->setChecked(true);
+    } else if (prefs->styleMode().compare(QLatin1String("windowsvista"), Qt::CaseInsensitive) == 0) {
+        ui->vistaStyleMode->setChecked(true);
+    } else {
+        ui->windowsStyleMode->setChecked(true);
+    }
+    updateStyleModeUi();
 
     // Unofficial Fork - begin
     connect(ui->browseTileZedPath, &QAbstractButton::clicked,
@@ -161,8 +173,67 @@ void PreferencesDialog::browseTilesDirectory()
 
 void PreferencesDialog::themeChanged(int index)
 {
+    Q_UNUSED(index)
     QString text = ui->themeCombo->currentText();
     Preferences::instance()->setTheme(text);
+}
+
+
+void PreferencesDialog::fusionStyleModeToggled(bool checked)
+{
+    if (!checked)
+        return;
+
+    Preferences::instance()->setStyleMode(QLatin1String("fusion"));
+    updateStyleModeUi();
+}
+
+void PreferencesDialog::vistaStyleModeToggled(bool checked)
+{
+    if (!checked)
+        return;
+
+    Preferences::instance()->setStyleMode(QLatin1String("windowsvista"));
+    updateStyleModeUi();
+}
+
+void PreferencesDialog::windowsStyleModeToggled(bool checked)
+{
+    if (!checked)
+        return;
+
+    Preferences::instance()->setStyleMode(QLatin1String("windows"));
+    updateStyleModeUi();
+}
+
+void PreferencesDialog::updateStyleModeUi()
+{
+    const QStringList styleKeys = QStyleFactory::keys();
+    auto hasStyle = [&styleKeys](const QString &name) {
+        for (const QString &key : styleKeys) {
+            if (key.compare(name, Qt::CaseInsensitive) == 0)
+                return true;
+        }
+        return false;
+    };
+
+    // these really would be better overall as some combined thing or a switch, but its only 3 so whatever
+    const bool hasWindows = hasStyle(QLatin1String("windows"));
+    const bool hasWindowsVista = hasStyle(QLatin1String("windowsvista"));
+    const bool hasFusion = hasStyle(QLatin1String("fusion"));
+
+    ui->fusionStyleMode->setEnabled(hasFusion);
+    ui->vistaStyleMode->setEnabled(hasWindowsVista);
+    ui->windowsStyleMode->setEnabled(hasWindows);
+
+    if (!ui->fusionStyleMode->isChecked() && !ui->vistaStyleMode->isChecked() && !ui->windowsStyleMode->isChecked()) {
+        if (hasFusion)
+            ui->fusionStyleMode->setChecked(true);
+        else if (hasWindowsVista)
+            ui->vistaStyleMode->setChecked(true);
+        else if (hasWindows)
+            ui->windowsStyleMode->setChecked(true);
+    }
 }
 
 void PreferencesDialog::gridColorChanged(const QColor &gridColor)

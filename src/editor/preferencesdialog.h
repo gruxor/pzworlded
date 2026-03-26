@@ -40,6 +40,9 @@ private slots:
     void browseTileZedPath();
     void resetThumbWidth(); 
     void gridColorChanged(const QColor &gridColor);
+    void fusionStyleModeToggled(bool checked);
+    void vistaStyleModeToggled(bool checked);
+    void windowsStyleModeToggled(bool checked);
 
     void accept();
     
@@ -49,6 +52,7 @@ private:
     QString mTilesDirectory;
     QString mTileZedPath;
     QColor mGridColor;
+    void updateStyleModeUi();
 };
 
 #endif // PREFERENCESDIALOG_H

@@ -105,7 +105,10 @@ public:
     bool showInvisibleTiles() const { return mShowInvisibleTiles; }
 
     QString theme() const { return mTheme; }
-    void applyTheme() const;
+    void applyTheme();
+
+    QString styleMode() const
+    { return mStyleMode; }
 
         // Unofficial Fork - begin
     int hsThresholdHP() const { return mhsThresholdHP; }
@@ -203,6 +206,7 @@ public slots:
     void setShowOtherWorlds(bool show);
     void setShowInvisibleTiles(bool show);
     void setTheme(const QString &theme);
+    void setStyleMode(const QString &styleMode);
 
 private:
     Preferences();
@@ -240,6 +244,7 @@ private:
     QString mThumbnailsDirectory;
     bool mShowInvisibleTiles;
     QString mTheme;
+    QString mStyleMode;
 
     // Unofficial Fork - begin
     int mGridOpacity;

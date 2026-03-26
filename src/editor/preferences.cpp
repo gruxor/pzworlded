@@ -21,7 +21,12 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QSettings>
+#include <QStyle>
+#include <QStyleFactory>
 #include <QTextStream>
+
+static QString findStyleKey(const QString &name);
+static QString defaultStyleMode();
 
 Preferences *Preferences::mInstance = 0;
 
@@ -124,6 +129,9 @@ Preferences::Preferences()
     mGridOpacity = mSettings->value(QLatin1String("GridOpacity"), 128).toInt();
     mGridWidth = mSettings->value(QLatin1String("GridWidth"), 1).toInt();
     mThumbWidth = mSettings->value(QLatin1String("ThumbWidth"), 512).toInt();
+    mStyleMode = mSettings->value(QLatin1String("StyleMode"), QLatin1String("fusion")).toString();
+    if (mStyleMode.isEmpty())
+        mStyleMode = defaultStyleMode();
 
     QString tileZedPath = mSettings->value(QLatin1String("TileZedPath")).toString();
     if (tileZedPath.isEmpty() || !QDir(tileZedPath).exists()) {
@@ -567,9 +575,30 @@ void Preferences::setTheme(const QString &theme)
     applyTheme();
 }
 
-void Preferences::applyTheme() const
+void Preferences::setStyleMode(const QString &styleMode)
 {
+    if (mStyleMode.compare(styleMode, Qt::CaseInsensitive) == 0)
+        return;
+
+    mStyleMode = styleMode;
+    applyTheme();
+}
+
+void Preferences::applyTheme()
+{
+    QString styleKey = findStyleKey(mStyleMode);
+    if (styleKey.isEmpty())
+        styleKey = defaultStyleMode();
+
+    if (!styleKey.isEmpty()) {
+        mStyleMode = styleKey;
+        if (QStyle *style = QStyleFactory::create(styleKey))
+            qApp->setStyle(style);
+    }
+
     mSettings->setValue(QLatin1String("Interface/Theme"), mTheme);
+    mSettings->setValue(QLatin1String("Interface/StyleMode"), mStyleMode);
+    
     if (mTheme == QStringLiteral("Default")) {
         qApp->setStyleSheet(QString());
         return;
@@ -694,6 +723,36 @@ void Preferences::setGridWidth(int newWidth)
     mGridWidth = newWidth;
     mSettings->setValue(QLatin1String("Interface/GridWidth"), mGridWidth);
     emit gridWidthChanged(mGridWidth);
+}
+
+static QString findStyleKey(const QString &name)
+{
+    const QStringList keys = QStyleFactory::keys();
+    for (const QString &key : keys) {
+        if (key.compare(name, Qt::CaseInsensitive) == 0)
+            return key;
+    }
+    return QString();
+}
+
+static QString defaultStyleMode()
+{
+    const QString fusion = findStyleKey(QLatin1String("fusion"));
+    if (!fusion.isEmpty())
+        return fusion;
+
+    if (qApp && qApp->style() && !qApp->style()->objectName().isEmpty())
+        return qApp->style()->objectName();
+
+    const QString windowsVista = findStyleKey(QLatin1String("windowsvista"));
+    if (!windowsVista.isEmpty())
+        return windowsVista;
+
+    const QString windows = findStyleKey(QLatin1String("windows"));
+    if (!windows.isEmpty())
+        return windows;
+
+    return QString();
 }
 
 void Preferences::setThumbWidth(int newWidth)
