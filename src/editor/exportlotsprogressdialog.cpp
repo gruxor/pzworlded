@@ -26,7 +26,8 @@ ExportLotsProgressDialog::ExportLotsProgressDialog(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->graphicsView->setScene(new QGraphicsScene(ui->graphicsView));
-    ui->graphicsView->scene()->setBackgroundBrush(Qt::lightGray);
+    const QPalette palette = ui->graphicsView->palette();
+    ui->graphicsView->scene()->setBackgroundBrush(palette.brush(QPalette::Window));
     ui->prompt->clear();
     connect(ui->buttonCancel, &QPushButton::clicked, this, &ExportLotsProgressDialog::cancel);
 }
@@ -41,11 +42,12 @@ void ExportLotsProgressDialog::setWorldSize(int widthInCells, int heightInCells)
     mWidthInCells = widthInCells;
     mHeightInCells = heightInCells;
     QGraphicsScene *scene = ui->graphicsView->scene();
+    const QPalette palette = ui->graphicsView->palette();
     int cellSize = 8;
     for (int y = 0; y < mHeightInCells; y++) {
         for (int x = 0; x < mWidthInCells; x++) {
             QRect cellRect(x * cellSize, y * cellSize, cellSize, cellSize);
-            QGraphicsRectItem *item = scene->addRect(cellRect, Qt::NoPen, Qt::gray);
+            QGraphicsRectItem *item = scene->addRect(cellRect, Qt::NoPen, palette.brush(QPalette::AlternateBase));
             mCellItems += item;
         }
     }
@@ -57,12 +59,13 @@ void ExportLotsProgressDialog::setWorldSize(int widthInCells, int heightInCells)
 void ExportLotsProgressDialog::setCellStatus(int cellX, int cellY, CellStatus status)
 {
     QGraphicsRectItem *item = mCellItems[cellX + cellY * mWidthInCells];
+    const QPalette palette = ui->graphicsView->palette();
     switch (status) {
     case CellStatus::Missing:
-        item->setBrush(Qt::gray);
+        item->setBrush(palette.brush(QPalette::AlternateBase));
         break;
     case CellStatus::Pending:
-        item->setBrush(Qt::white);
+        item->setBrush(palette.brush(QPalette::Base));
         break;
     case CellStatus::Exported:
         item->setBrush(Qt::green);

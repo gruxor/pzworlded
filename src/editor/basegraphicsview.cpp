@@ -400,14 +400,14 @@ MiniMap::MiniMap(BaseGraphicsView *parent)
     connect(prefs, &Preferences::miniMapWidthChanged, this, &MiniMap::widthChanged);
 
     QGraphicsScene *scene = new QGraphicsScene(this);
-    scene->setBackgroundBrush(Qt::gray);
+    scene->setBackgroundBrush(palette().brush(QPalette::Window));
     QGraphicsView::setScene(scene);
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     mViewportItem = new QGraphicsPolygonItem();
-    QPen pen(Qt::white);
+    QPen pen(palette().color(QPalette::Highlight));
     pen.setCosmetic(true);
     mViewportItem->setPen(pen);
     mViewportItem->setZValue(100);

@@ -174,17 +174,52 @@
         </widget>
        </item>
        <item>
-        <widget class="QToolButton" name="currentLevelButton">
-         <property name="text">
-          <string>Current level: 0</string>
-         </property>
-         <property name="popupMode">
-          <enum>QToolButton::InstantPopup</enum>
-         </property>
-         <property name="arrowType">
-          <enum>Qt::NoArrow</enum>
-         </property>
-        </widget>
+          <widget class="QLabel" name="currentLevelLabel">
+           <property name="text">
+            <string>Level:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="currentLevelMinusTen">
+           <property name="text">
+            <string>-10</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="currentLevelMinusOne">
+           <property name="text">
+            <string>-1</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="currentLevelSpinBox">
+           <property name="minimum">
+            <number>0</number>
+           </property>
+           <property name="maximum">
+            <number>0</number>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="currentLevelPlusOne">
+           <property name="text">
+            <string>+1</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="currentLevelPlusTen">
+           <property name="text">
+            <string>+10</string>
+           </property>
+          </widget>
        </item>
        <item>
         <widget class="Line" name="line_3">

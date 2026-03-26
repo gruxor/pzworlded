@@ -108,6 +108,7 @@
 #include <QMessageBox>
 #include <QRandomGenerator>
 #include <QScrollBar>
+#include <QSpinBox>
 #include <QUndoGroup>
 #include <QUndoStack>
 
@@ -135,7 +136,6 @@ MainWindow::MainWindow(QWidget *parent)
     , mRoadsDock(new RoadsDock(this))
 #endif
     , mCurrentDocument(0)
-    , mCurrentLevelMenu(new QMenu(this))
     , mObjectGroupMenu(new QMenu(this))
     , mZoomable(0)
     , mLotPackWindow(0)
@@ -435,9 +435,32 @@ MainWindow::MainWindow(QWidget *parent)
     mActionManager->load(error);
     mActionManager->emitShortcutEditedForAllActions();
 
-    ui->currentLevelButton->setMenu(mCurrentLevelMenu);
-    connect(mCurrentLevelMenu, &QMenu::aboutToShow, this, &MainWindow::aboutToShowCurrentLevelMenu);
-    connect(mCurrentLevelMenu, &QMenu::triggered, this, &MainWindow::currentLevelMenuTriggered);
+    ui->currentLevelSpinBox->setAlignment(Qt::AlignCenter);
+    ui->currentLevelSpinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);
+    auto setupLevelButton = [](QToolButton *btn, const QString &text) {
+        btn->setText(text);
+        btn->setAutoRepeat(true);
+        btn->setAutoRepeatDelay(400);
+        btn->setAutoRepeatInterval(80);
+    };
+    setupLevelButton(ui->currentLevelMinusTen, QLatin1String("-10"));
+    setupLevelButton(ui->currentLevelMinusOne, QLatin1String("-1"));
+    setupLevelButton(ui->currentLevelPlusOne, QLatin1String("+1"));
+    setupLevelButton(ui->currentLevelPlusTen, QLatin1String("+10"));
+    connect(ui->currentLevelMinusTen, &QAbstractButton::clicked, this, [this] {
+        ui->currentLevelSpinBox->setValue(ui->currentLevelSpinBox->value() - 10);
+    });
+    connect(ui->currentLevelMinusOne, &QAbstractButton::clicked, this, [this] {
+        ui->currentLevelSpinBox->setValue(ui->currentLevelSpinBox->value() - 1);
+    });
+    connect(ui->currentLevelPlusOne, &QAbstractButton::clicked, this, [this] {
+        ui->currentLevelSpinBox->setValue(ui->currentLevelSpinBox->value() + 1);
+    });
+    connect(ui->currentLevelPlusTen, &QAbstractButton::clicked, this, [this] {
+        ui->currentLevelSpinBox->setValue(ui->currentLevelSpinBox->value() + 10);
+    });
+    connect(ui->currentLevelSpinBox, qOverload<int>(&QSpinBox::valueChanged),
+            this, &MainWindow::currentLevelSpinBoxChanged);
 
     ui->objectGroupButton->setMenu(mObjectGroupMenu);
     connect(mObjectGroupMenu, &QMenu::aboutToShow,
@@ -1016,31 +1039,15 @@ void MainWindow::setStatusBarCoords(int x, int y)
     }
 }
 
-void MainWindow::aboutToShowCurrentLevelMenu()
+void MainWindow::currentLevelSpinBoxChanged(int level)
 {
-    mCurrentLevelMenu->clear();
     CellDocument *cellDoc = mCurrentDocument->asCellDocument();
     if (!cellDoc)
         return;
-    QStringList items;
-    foreach (CompositeLayerGroup *layerGroup, cellDoc->scene()->mapComposite()->sortedLayerGroups())
-        items.prepend(QString::number(layerGroup->level()));
-    foreach (QString item, items) {
-        QAction *action = mCurrentLevelMenu->addAction(item);
-        if (item.toInt() == cellDoc->currentLevel()) {
-            action->setCheckable(true);
-            action->setChecked(true);
-            action->setEnabled(false);
-        }
-    }
-}
 
-void MainWindow::currentLevelMenuTriggered(QAction *action)
-{
-    CellDocument *cellDoc = mCurrentDocument->asCellDocument();
-    if (!cellDoc)
+    if (cellDoc->currentLevel() == level)
         return;
-    int level = action->text().toInt();
+
     cellDoc->setCurrentLevel(level);
 }
 
@@ -3270,8 +3277,16 @@ void MainWindow::updateActions()
             ui->currentCellLabel->setText(tr("Current cell: %1,%2").arg(cell->displayPos().x()).arg(cell->displayPos().y()));
         } else
             ui->currentCellLabel->setText(tr("Current cell: <none>"));
-        ui->currentLevelButton->setText(tr("Level: ? ")); // extra space cuz of down-arrow placement on Windows
-        ui->currentLevelButton->setEnabled(false);
+        ui->currentLevelSpinBox->setRange(0, 0);
+        ui->currentLevelSpinBox->setSpecialValueText(tr("<none>"));
+        ui->currentLevelSpinBox->blockSignals(true);
+        ui->currentLevelSpinBox->setValue(0);
+        ui->currentLevelSpinBox->blockSignals(false);
+        ui->currentLevelSpinBox->setEnabled(false);
+        ui->currentLevelMinusTen->setEnabled(false);
+        ui->currentLevelMinusOne->setEnabled(false);
+        ui->currentLevelPlusOne->setEnabled(false);
+        ui->currentLevelPlusTen->setEnabled(false);
         ui->objectGroupButton->setText(tr("Obj Grp: <none> "));
         ui->objectGroupButton->setEnabled(false);
     } else if (cellDoc) {
@@ -3279,9 +3294,18 @@ void MainWindow::updateActions()
         ui->actionClearMapOnly->setEnabled(true);
         WorldCell *cell = cellDoc->cell();
         ui->currentCellLabel->setText(tr("Current cell: %1,%2").arg(cell->displayPos().x()).arg(cell->displayPos().y()));
+        MapComposite *mapComposite = cellDoc->scene()->mapComposite();
         int level = cellDoc->currentLevel();
-        ui->currentLevelButton->setText(tr("Level: %1 ").arg(level)); // extra space cuz of down-arrow placement on Windows
-        ui->currentLevelButton->setEnabled(true);
+        ui->currentLevelSpinBox->setSpecialValueText(QString());
+        ui->currentLevelSpinBox->blockSignals(true);
+        ui->currentLevelSpinBox->setRange(mapComposite->minLevel(), mapComposite->maxLevel());
+        ui->currentLevelSpinBox->setValue(level);
+        ui->currentLevelSpinBox->blockSignals(false);
+        ui->currentLevelSpinBox->setEnabled(true);
+        ui->currentLevelMinusTen->setEnabled(true);
+        ui->currentLevelMinusOne->setEnabled(true);
+        ui->currentLevelPlusOne->setEnabled(true);
+        ui->currentLevelPlusTen->setEnabled(true);
         ui->actionLevelAbove->setEnabled(level < MAX_WORLD_LEVEL /*cellDoc->scene()->mapComposite()->maxLevel()*/);
         ui->actionLevelBelow->setEnabled(level > MIN_WORLD_LEVEL);
         WorldObjectGroup *og = cellDoc->currentObjectGroup();
@@ -3293,8 +3317,16 @@ void MainWindow::updateActions()
         ui->coordinatesLabel->clear();
         ui->worldCoordinatesLabel->clear();
         ui->currentCellLabel->setText(tr("Current cell: <none> "));
-        ui->currentLevelButton->setText(tr("Level: ? ")); // extra space cuz of down-arrow placement on Windows
-        ui->currentLevelButton->setEnabled(false);
+        ui->currentLevelSpinBox->setRange(0, 0);
+        ui->currentLevelSpinBox->setSpecialValueText(tr("<none>"));
+        ui->currentLevelSpinBox->blockSignals(true);
+        ui->currentLevelSpinBox->setValue(0);
+        ui->currentLevelSpinBox->blockSignals(false);
+        ui->currentLevelSpinBox->setEnabled(false);
+        ui->currentLevelMinusTen->setEnabled(false);
+        ui->currentLevelMinusOne->setEnabled(false);
+        ui->currentLevelPlusOne->setEnabled(false);
+        ui->currentLevelPlusTen->setEnabled(false);
         ui->objectGroupButton->setText(tr("Obj Grp: <none> "));
         ui->objectGroupButton->setEnabled(false);
     }

@@ -173,8 +173,7 @@ public slots:
 
     void setStatusBarCoords(int x, int y);
 
-    void aboutToShowCurrentLevelMenu();
-    void currentLevelMenuTriggered(QAction *action);
+    void currentLevelSpinBoxChanged(int level);
 
     void aboutToShowObjGrpMenu();
     void objGrpMenuTriggered(QAction *action);
@@ -250,7 +249,6 @@ private:
 #endif
     Document *mCurrentDocument;
     QComboBox *mZoomComboBox;
-    QMenu *mCurrentLevelMenu;
     QMenu *mObjectGroupMenu;
     Zoomable *mZoomable;
     QSettings mSettings;

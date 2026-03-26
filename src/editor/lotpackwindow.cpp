@@ -32,6 +32,7 @@
 #include "zlevelrenderer.h"
 
 #include <qmath.h>
+#include <QApplication>
 #include <QDebug>
 #include <QFileDialog>
 #include <QSettings>
@@ -156,7 +157,7 @@ void LotPackMiniMapItem::paint(QPainter *painter,
 
 void LotPackMiniMapItem::setWorld(IsoWorld *world)
 {
-    QPen pen(Qt::blue);
+    QPen pen(qApp->palette().color(QPalette::Link));
     pen.setCosmetic(true);
 
     if (mGridItem)
@@ -291,10 +292,11 @@ LotPackScene::LotPackScene(QWidget *parent) :
     mDarkRectangle(new QGraphicsRectItem),
     mCurrentLevel(0)
 {
-    setBackgroundBrush(Qt::lightGray);
+    const QPalette pal = qApp->palette();
+    setBackgroundBrush(pal.brush(QPalette::Window));
 
     mDarkRectangle->setPen(Qt::NoPen);
-    mDarkRectangle->setBrush(Qt::black);
+    mDarkRectangle->setBrush(pal.brush(QPalette::Shadow));
     mDarkRectangle->setOpacity(0.6);
 
     connect(Preferences::instance(), &Preferences::highlightCurrentLevelChanged,
