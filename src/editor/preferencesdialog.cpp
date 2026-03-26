@@ -35,6 +35,21 @@ PreferencesDialog::PreferencesDialog(WorldDocument *worldDoc, QWidget *parent)
 
     Preferences *prefs = Preferences::instance();
 
+    const QDir themeDir(QDir::currentPath() + QLatin1String("/theme"));
+    const struct {
+        const char *displayName;
+        const char *fileName;
+    } externalThemes[] = {
+        { "Combinear", "Combinear.qss" },
+        { "Dane", "Dane.qss" }
+    };
+    for (const auto &theme : externalThemes) {
+        if (themeDir.exists(QLatin1String(theme.fileName))
+                && ui->themeCombo->findText(QLatin1String(theme.displayName)) == -1) {
+            ui->themeCombo->addItem(QLatin1String(theme.displayName));
+        }
+    }
+
     connect(ui->themeCombo, qOverload<int>(&QComboBox::currentIndexChanged), this, &PreferencesDialog::themeChanged);
     connect(ui->fusionStyleMode, &QAbstractButton::toggled, this, &PreferencesDialog::fusionStyleModeToggled);
     connect(ui->vistaStyleMode, &QAbstractButton::toggled, this, &PreferencesDialog::vistaStyleModeToggled);
