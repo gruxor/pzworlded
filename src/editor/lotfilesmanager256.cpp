@@ -1904,15 +1904,15 @@ bool LotFilesWorker256::processObjectGroup(CombinedCellMaps &combinedMaps, Objec
         }
 
         if (objectGroup->name().contains(QLatin1String("RoomDefs"))) {
-            if (x < 0 || y < 0 || x + w > CELL_WIDTH || y + h > CELL_HEIGHT) {
 #if 0
+            if (x < 0 || y < 0 || x + w > CELL_WIDTH || y + h > CELL_HEIGHT) {
                 x = qBound(0, x, CELL_WIDTH);
                 y = qBound(0, y, CELL_HEIGHT);
                 mError = tr("A RoomDef in cell %1,%2 overlaps cell boundaries.\nNear x,y=%3,%4")
                         .arg(cell->x()).arg(cell->y()).arg(x).arg(y);
                 return false;
-#endif
             }
+#endif
             // Apply the MapComposite offset in the top-level map.
             x += offset1.x();
             y += offset1.y();

@@ -515,6 +515,7 @@ bool InGameMapFeatureGenerator::processObjectGroup(WorldCell *cell, ObjectGroup 
         x += offset.x();
         y += offset.y();
 
+#if 0
         if (x < 0 || y < 0 || x + w > 300 || y + h > 300) {
             x = qBound(0, x, 300);
             y = qBound(0, y, 300);
@@ -522,6 +523,7 @@ bool InGameMapFeatureGenerator::processObjectGroup(WorldCell *cell, ObjectGroup 
                     .arg(cell->x()).arg(cell->y()).arg(x).arg(y);
             return false;
         }
+#endif
         if (bounds.isEmpty())
             bounds = { x, y, w, h };
         else
@@ -605,6 +607,7 @@ bool InGameMapFeatureGenerator::processObjectGroup(WorldCell *cell, MapInfo *map
         x += offset.x();
         y += offset.y();
 
+#if 0
         if (x < 0 || y < 0 || x + w > 300 || y + h > 300) {
             x = qBound(0, x, 300);
             y = qBound(0, y, 300);
@@ -612,6 +615,7 @@ bool InGameMapFeatureGenerator::processObjectGroup(WorldCell *cell, MapInfo *map
                     .arg(cell->x()).arg(cell->y()).arg(x).arg(y);
             return false;
         }
+#endif
         if (bounds.isEmpty())
             bounds = { x, y, w, h };
         else
