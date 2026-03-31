@@ -139,7 +139,7 @@ PreferencesDialog::PreferencesDialog(WorldDocument *worldDoc, QWidget *parent)
             ui->gridWidth->setValue(1); // Valeur par défaut pour GridWidth
         });
         connect(ui->gridOpacityDefault, &QPushButton::clicked, this, [this]() {
-            ui->gridOpacity->setValue(255); // Valeur par défaut pour GridOpacity
+            ui->gridOpacity->setValue(128); // Valeur par défaut pour GridOpacity
         });
         connect(ui->hsThresholdHPDefault, &QPushButton::clicked, this, [this]() {
             ui->hsThresholdHP->setValue(1000); // Valeur par défaut pour ThresholdHP
