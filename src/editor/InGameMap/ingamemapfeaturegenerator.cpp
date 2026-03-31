@@ -232,65 +232,72 @@ bool InGameMapFeatureGenerator::doBuildings(WorldCell *cell, MapInfo *mapInfo)
     DelayedMapLoader mapLoader;
     mapLoader.addMap(mapInfo);
 
-    WorldCellLotList lots;
-    for (WorldCellLot *lot : cell->lots()) {
-        if (MapInfo *info = MapManager::instance()->loadMap(lot->mapName(),
-                                                            QString(), true,
-                                                            MapManager::PriorityMedium)) {
-            mapLoader.addMap(info);
-            lots += lot;
-        } else {
-            mFailures += GenerateCellFailure(cell, MapManager::instance()->errorString());
-//            mError = MapManager::instance()->errorString();
-//            return false;
+    if (cell->lots().count() > 0)
+    {
+        WorldCellLotList lots;
+        for (WorldCellLot *lot : cell->lots()) {
+            if (MapInfo *info = MapManager::instance()->loadMap(lot->mapName(),
+                                                                QString(), true,
+                                                                MapManager::PriorityMedium)) {
+                mapLoader.addMap(info);
+                lots += lot;
+            } else {
+                mFailures += GenerateCellFailure(cell, MapManager::instance()->errorString());
+    //            mError = MapManager::instance()->errorString();
+    //            return false;
+            }
         }
-    }
 
-    while (mapLoader.isLoading()) {
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-    }
+        while (mapLoader.isLoading()) {
+            qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        }
 
-    // This method won't work for buildings in the TMX, it only works for separate building files.
-    for (WorldCellLot *lot : lots) {
-        MapInfo *info = MapManager::instance()->mapInfo(lot->mapName());
-        if (info != nullptr && info->map() != nullptr) {
-            QRect bounds;
-            QVector<QRect> rects;
-            for (ObjectGroup *og : info->map()->objectGroups()) {
-                if (processObjectGroup(cell, info, og, lot->level(), lot->pos(), bounds, rects) == false) {
+        // This method won't work for buildings in the TMX, it only works for separate building files.
+        for (WorldCellLot *lot : lots) {
+            MapInfo *info = MapManager::instance()->mapInfo(lot->mapName());
+            if (info != nullptr && info->map() != nullptr) {
+                QRect bounds;
+                QVector<QRect> rects;
+                for (ObjectGroup *og : info->map()->objectGroups()) {
+                    if (processObjectGroup(cell, info, og, lot->level(), lot->pos(), bounds, rects) == false) {
+                        return false;
+                    }
+                }
+                if (traceBuildingOutline(cell, info, bounds, rects) == false) {
                     return false;
                 }
             }
-            if (traceBuildingOutline(cell, info, bounds, rects) == false) {
-                return false;
-            }
         }
     }
+    else {
+        while (mapLoader.isLoading()) {
+            qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        }
+        while (mapInfo->isLoading())
+            qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
 
-    while (mapInfo->isLoading())
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        MapComposite staticMapComposite(mapInfo);
+        MapComposite *mapComposite = &staticMapComposite;
+        while (mapComposite->waitingForMapsToLoad() || mapLoader.isLoading())
+            qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
+        if (!mapLoader.errorString().isEmpty()) {
+            mError = mapLoader.errorString();
+            return false;
+        }
 
-    MapComposite staticMapComposite(mapInfo);
-    MapComposite *mapComposite = &staticMapComposite;
-    while (mapComposite->waitingForMapsToLoad() || mapLoader.isLoading())
-        qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
-    if (!mapLoader.errorString().isEmpty()) {
-        mError = mapLoader.errorString();
-        return false;
-    }
+        foreach (WorldCellLot *lot, cell->lots()) {
+            MapInfo *info = MapManager::instance()->mapInfo(lot->mapName());
+            Q_ASSERT(info && info->map());
+            mapComposite->addMap(info, lot->pos(), lot->level());
+        }
 
-    foreach (WorldCellLot *lot, cell->lots()) {
-        MapInfo *info = MapManager::instance()->mapInfo(lot->mapName());
-        Q_ASSERT(info && info->map());
-        mapComposite->addMap(info, lot->pos(), lot->level());
-    }
-
-    if (processObjectGroups(cell, mapComposite) == false)
-    {
-        QMessageBox msgBox;
-        msgBox.setText(QLatin1String("The document has been modified."));
-        msgBox.exec();
-        return false;
+        if (processObjectGroups(cell, mapComposite) == false)
+        {
+            QMessageBox msgBox;
+            msgBox.setText(QLatin1String("The document has been modified."));
+            msgBox.exec();
+            return false;
+        }
     }
     return true;
 }
