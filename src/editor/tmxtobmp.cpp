@@ -447,9 +447,11 @@ bool TMXToBMP::processObjectGroup(WorldCell *cell, ObjectGroup *objectGroup,
             if (x < 0 || y < 0 || x + w > 300 || y + h > 300) {
                 x = qBound(0, x, 300);
                 y = qBound(0, y, 300);
+#if 0
                 mError = tr("A RoomDef in cell %1,%2 overlaps cell boundaries.\nNear x,y=%3,%4")
                         .arg(cell->x()).arg(cell->y()).arg(x).arg(y);
                 return false;
+#endif
             }
 
             mBldgPainter.fillRect(cell->x() * 300 + x,
