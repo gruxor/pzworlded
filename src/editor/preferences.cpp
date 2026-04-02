@@ -188,7 +188,7 @@ QString Preferences::userPath(const QString &fileName) const
 
 QString Preferences::configPath() const
 {
-    return mTileZedPath + QLatin1String("/.TileZed");
+    return mTileZedPath + QLatin1String("/../.editordata");
 }
 
 QString Preferences::configPath(const QString &fileName) const
