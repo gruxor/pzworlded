@@ -22,8 +22,6 @@ biomemapgeneratorDialog::biomemapgeneratorDialog(World *world, QWidget* parent)
 {
     ui->setupUi(this);
 
-    Preferences* prefs = Preferences::instance();
-
     // Initialiser les champs ou paramètres à partir de mWorldDoc
     const GenerateLotsSettings& settings = mWorld->getGenerateLotsSettings();
     ui->xOrigin->setValue(settings.worldOrigin.x());
@@ -54,7 +52,6 @@ biomemapgeneratorDialog::~biomemapgeneratorDialog()
 void biomemapgeneratorDialog::browseMainImage()
 {
     QString mapPath = mWorld->getGenerateLotsSettings().exportDir + QLatin1String("/..");
-    Preferences *prefs = Preferences::instance();
     QString filePath = QFileDialog::getOpenFileName(this, tr("Select Main Image"), mapPath, tr("Images (*.png *.bmp *.jpg)"));
     if (!filePath.isEmpty()) {
         ui->mainImagePath->setText(filePath);
@@ -64,7 +61,6 @@ void biomemapgeneratorDialog::browseMainImage()
 void biomemapgeneratorDialog::browseVegImage()
 {
     QString mapPath = mWorld->getGenerateLotsSettings().exportDir + QLatin1String("/..");
-    Preferences *prefs = Preferences::instance();
     QString filePath = QFileDialog::getOpenFileName(this, tr("Select Vegetation Image"), mapPath, tr("Images (*.png *.bmp *.jpg)"));
     if (!filePath.isEmpty()) {
         ui->vegImagePath->setText(filePath);
@@ -74,7 +70,6 @@ void biomemapgeneratorDialog::browseVegImage()
 void biomemapgeneratorDialog::browseOutputPath()
 {
      QString mapPath = mWorld->getGenerateLotsSettings().exportDir + QLatin1String("/..") + QLatin1String("/biome.png");
-    Preferences *prefs = Preferences::instance();
     QString filePath = QFileDialog::getSaveFileName(this, tr("Select Output File"), mapPath, tr("PNG Image (*.png)"));
     if (!filePath.isEmpty()) {
         ui->outputBiomeMapPath->setText(filePath + QLatin1String("/biome.png"));
