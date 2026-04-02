@@ -540,7 +540,7 @@ void MainWindow::changeEvent(QEvent *event)
 
 void MainWindow::retranslateUi()
 {
-    setWindowTitle(tr("PZWorldEd Unofficial Fork (Unified Build)"));
+    setWindowTitle(tr("PZWorldEd Community Edition"));
 }
 
 void MainWindow::newWorld()
@@ -1756,7 +1756,7 @@ void MainWindow::updateWindowTitle()
     else {
         fileName = QDir::toNativeSeparators(fileName);
     }
-    setWindowTitle(tr("[*]%1 - WorldEd Unofficial Fork (Unified Build)").arg(fileName));
+    setWindowTitle(tr("[*]%1 - WorldEd Community Edition").arg(fileName));
     setWindowFilePath(fileName);
     bool isModified = mCurrentDocument ? mCurrentDocument->isModified() : false;
     if (mCurrentDocument && mCurrentDocument->isCellDocument())
@@ -3344,8 +3344,8 @@ void MainWindow::updateActions()
 void MainWindow::showAboutDialog()
 {
     QString aboutText = QLatin1String(
-        "<h2>Unofficial Mapping Tools</h2>"
-        "<p>This is an unofficial fork of the <b>PZWorldEd</b> editor for the game <b>Project Zomboid</b>.</p>"
+        "<h2>Community Edition</h2>"
+        "<p>This is a community edition of the <b>PZWorldEd</b> editor for the game <b>Project Zomboid</b>.</p>"
         "<p><b>Important:</b> This tool is not affiliated with or endorsed by <b>The Indie Stone</b> or the developers of <b>Project Zomboid</b>.</p>"
         "<p><b>Disclaimer:</b> This version may contain bugs, some of which may be identical to the official version. "
         "The goal of this fork is to add features and functionalities that are currently absent from the original version.</p>"
@@ -3354,7 +3354,7 @@ void MainWindow::showAboutDialog()
     );
 
     QMessageBox aboutBox;
-    aboutBox.setWindowTitle(tr("About Unofficial Mapping Tools"));
+    aboutBox.setWindowTitle(tr("About Community Edition"));
     aboutBox.setText(aboutText);
     aboutBox.setIcon(QMessageBox::Information);
     aboutBox.setTextFormat(Qt::RichText);  // Ensures that the HTML tags are interpreted properly
