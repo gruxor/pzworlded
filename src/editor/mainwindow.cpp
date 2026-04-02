@@ -953,12 +953,21 @@ bool MainWindow::InitConfigFiles()
     // Refresh the ui before blocking while loading tilesets etc
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
 
-    // Make sure the user has chosen the Tiles directory.
-    QString tilesDirectory = TileMetaInfoMgr::instance()->tilesDirectory();
-    if (tilesDirectory.isEmpty() || !QDir(tilesDirectory).exists()) {
+    auto hasValidPaths = []() {
+        Preferences *prefs = Preferences::instance();
+        const QString tileZedPath = prefs->tileZedPath();
+        const QString configDirectory = prefs->configPath();
+        const QString tilesDirectory = TileMetaInfoMgr::instance()->tilesDirectory();
+
+        return !tileZedPath.isEmpty() && QDir(tileZedPath).exists()
+                && !configDirectory.isEmpty() && QDir(configDirectory).exists()
+                && !tilesDirectory.isEmpty() && QDir(tilesDirectory).exists();
+    };
+
+    // show path setup automatically only when defaults aren't found
+    if (!hasValidPaths()) {
         preferencesDialog();
-        tilesDirectory = TileMetaInfoMgr::instance()->tilesDirectory();
-        if (tilesDirectory.isEmpty() || !QDir(tilesDirectory).exists())
+        if (!hasValidPaths())
             return false;
     }
 

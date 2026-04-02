@@ -20,6 +20,7 @@
 #include <QApplication>
 #include <QDir>
 #include <QDirIterator>
+#include <QFileInfo>
 #include <QSettings>
 #include <QStyle>
 #include <QStyleFactory>
@@ -27,6 +28,23 @@
 
 static QString findStyleKey(const QString &name);
 static QString defaultStyleMode();
+
+static QString normalizeDirectoryPath(const QString &path)
+{
+    if (path.isEmpty())
+        return QString();
+
+    const QString cleaned = QDir::cleanPath(path);
+    QFileInfo info(cleaned);
+    if (!info.exists())
+        return cleaned;
+
+    const QString canonical = info.canonicalFilePath();
+    if (!canonical.isEmpty())
+        return canonical;
+
+    return info.absoluteFilePath();
+}
 
 Preferences *Preferences::mInstance = 0;
 
@@ -133,11 +151,13 @@ Preferences::Preferences()
     if (mStyleMode.isEmpty())
         mStyleMode = defaultStyleMode();
 
-    QString tileZedPath = mSettings->value(QLatin1String("TileZedPath")).toString();
+    QString tileZedPath = normalizeDirectoryPath(mSettings->value(QLatin1String("TileZedPath")).toString());
+    const QString defaultTileZedPath = normalizeDirectoryPath(
+                QDir(QCoreApplication::applicationDirPath()).filePath(QLatin1String("../TileZed")));
     if (tileZedPath.isEmpty() || !QDir(tileZedPath).exists()) {
-        tileZedPath = QCoreApplication::applicationDirPath() + QLatin1String("/../TileZed");
+        tileZedPath = defaultTileZedPath;
     }
-    mTileZedPath = mSettings->value(QLatin1String("TileZedPath"), tileZedPath).toString();
+    mTileZedPath = tileZedPath;
     // Unofficial Fork - end
 
     mSettings->endGroup();
@@ -150,14 +170,14 @@ Preferences::Preferences()
 
     // Set the default location of the Tiles Directory to the same value set
     // in TileZed's Tilesets Dialog.
-    QString tilesDirectory = mSettings->value(QLatin1String("TilesDirectory")).toString();
+    QString tilesDirectory = normalizeDirectoryPath(mSettings->value(QLatin1String("TilesDirectory")).toString());
+    const QString defaultTilesDirectory = normalizeDirectoryPath(
+                QDir(QCoreApplication::applicationDirPath()).filePath(QLatin1String("../Tiles")));
 
     if (tilesDirectory.isEmpty() || !QDir(tilesDirectory).exists()) {
-        tilesDirectory = QCoreApplication::applicationDirPath() +
-                QLatin1Char('/') + QLatin1String("../Tiles");
+        tilesDirectory = defaultTilesDirectory;
     }
-    mTilesDirectory = mSettings->value(QLatin1String("TilesDirectory"),
-                                       tilesDirectory).toString();
+    mTilesDirectory = tilesDirectory;
 
     // Use the same .tiles files as TileZed
     mTilePropertiesFiles = propertiesFromTZPath(mTileZedPath);
@@ -188,7 +208,8 @@ QString Preferences::userPath(const QString &fileName) const
 
 QString Preferences::configPath() const
 {
-    return mTileZedPath + QLatin1String("/../.editordata");
+    const QString path = QDir(mTileZedPath).filePath(QLatin1String("../.editordata"));
+    return normalizeDirectoryPath(path);
 }
 
 QString Preferences::configPath(const QString &fileName) const
@@ -536,10 +557,11 @@ QString Preferences::tilesDirectory() const
 
 void Preferences::setTilesDirectory(const QString &path)
 {
-    if (mTilesDirectory == path)
+    const QString normalizedPath = normalizeDirectoryPath(path);
+    if (mTilesDirectory == normalizedPath)
         return;
-    mTilesDirectory = path;
-    mSettings->setValue(QLatin1String("TileZed/TilesDirectory"), path);
+    mTilesDirectory = normalizedPath;
+    mSettings->setValue(QLatin1String("TileZed/TilesDirectory"), mTilesDirectory);
     emit tilesDirectoryChanged();
 }
 
@@ -636,9 +658,10 @@ void Preferences::applyTheme()
 // Unofficial Fork - begin
 void Preferences::setTileZedPath(const QString &path)
 {
-    if (mTileZedPath == path)
+    const QString normalizedPath = normalizeDirectoryPath(path);
+    if (mTileZedPath == normalizedPath)
         return;
-    mTileZedPath = path;
+    mTileZedPath = normalizedPath;
     mTilePropertiesFiles = propertiesFromTZPath(mTileZedPath);
     mSettings->setValue(QLatin1String("Interface/TileZedPath"), mTileZedPath);
     emit tileZedPathChanged();
