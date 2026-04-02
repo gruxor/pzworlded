@@ -190,7 +190,8 @@ void ZLevelRenderer::drawGrid(QPainter *painter, const QRectF &rect, QColor grid
 
     QPen pen;
     pen.setCosmetic(true);
-    pen.setWidth(width);
+    const qreal scaleX = qAbs(painter->transform().m11());
+    pen.setWidthF(qMax(scaleX * qreal(width), 1.0));
     QBrush brush(gridColor, Qt::Dense4Pattern);
     brush.setTransform(QTransform::fromScale(1/painter->transform().m11(),
                                              1/painter->transform().m22()));
