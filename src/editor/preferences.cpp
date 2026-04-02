@@ -85,7 +85,7 @@ bool Preferences::highlightCurrentLevel() const
 
 Preferences::Preferences()
     : QObject()
-    , mSettings(new QSettings(QDir::currentPath() + QLatin1String("/settings.ini"), QSettings::IniFormat))
+    , mSettings(new QSettings(QCoreApplication::applicationDirPath() + QLatin1String("/settings.ini"), QSettings::IniFormat))
 {
     // Retrieve interface settings
     mSettings->beginGroup(QLatin1String("Interface"));
@@ -135,7 +135,7 @@ Preferences::Preferences()
 
     QString tileZedPath = mSettings->value(QLatin1String("TileZedPath")).toString();
     if (tileZedPath.isEmpty() || !QDir(tileZedPath).exists()) {
-        tileZedPath = QDir::currentPath() + QLatin1String("/../TileZed");
+        tileZedPath = QCoreApplication::applicationDirPath() + QLatin1String("/../TileZed");
     }
     mTileZedPath = mSettings->value(QLatin1String("TileZedPath"), tileZedPath).toString();
     // Unofficial Fork - end
@@ -153,7 +153,7 @@ Preferences::Preferences()
     QString tilesDirectory = mSettings->value(QLatin1String("TilesDirectory")).toString();
 
     if (tilesDirectory.isEmpty() || !QDir(tilesDirectory).exists()) {
-        tilesDirectory = QDir::currentPath() +
+        tilesDirectory = QCoreApplication::applicationDirPath() +
                 QLatin1Char('/') + QLatin1String("../Tiles");
     }
     mTilesDirectory = mSettings->value(QLatin1String("TilesDirectory"),

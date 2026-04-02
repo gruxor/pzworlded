@@ -22,7 +22,10 @@
 #include "tilemetainfomgr.h"
 
 #include <QFileDialog>
+#include <QGuiApplication>
+#include <QScreen>
 #include <QStringList>
+#include <QTabBar>
 #include <QDir>
 #include <QStyleFactory>
 
@@ -32,6 +35,8 @@ PreferencesDialog::PreferencesDialog(WorldDocument *worldDoc, QWidget *parent)
     , mWorldDoc(worldDoc)
 {
     ui->setupUi(this);
+    ui->tabWidget->setUsesScrollButtons(true);
+    ui->tabWidget->tabBar()->setElideMode(Qt::ElideRight);
 
     Preferences *prefs = Preferences::instance();
 
@@ -135,31 +140,40 @@ PreferencesDialog::PreferencesDialog(WorldDocument *worldDoc, QWidget *parent)
     });
 
     connect(ui->thumbWidthDefault, &QPushButton::clicked, this, &PreferencesDialog::resetThumbWidth);
-        connect(ui->gridWidthDefault, &QPushButton::clicked, this, [this]() {
-            ui->gridWidth->setValue(1); // Valeur par défaut pour GridWidth
-        });
-        connect(ui->gridOpacityDefault, &QPushButton::clicked, this, [this]() {
-            ui->gridOpacity->setValue(128); // Valeur par défaut pour GridOpacity
-        });
-        connect(ui->hsThresholdHPDefault, &QPushButton::clicked, this, [this]() {
-            ui->hsThresholdHP->setValue(1000); // Valeur par défaut pour ThresholdHP
-        });
-        connect(ui->hsSizeHPDefault, &QPushButton::clicked, this, [this]() {
-            ui->hsSizeHP->setValue(40); // Valeur par défaut pour SizeHP
-        });
-        connect(ui->hsThresholdHTDefault, &QPushButton::clicked, this, [this]() {
-            ui->hsThresholdHT->setValue(1000); // Valeur par défaut pour ThresholdHP
-        });
-        connect(ui->hsSizeHTDefault, &QPushButton::clicked, this, [this]() {
-            ui->hsSizeHT->setValue(40); // Valeur par défaut pour SizeHP
-        });
-        connect(ui->hsThresholdRDefault, &QPushButton::clicked, this, [this]() {
-            ui->hsThresholdR->setValue(1000); // Valeur par défaut pour ThresholdHP
-        });
-        connect(ui->hsSizeRDefault, &QPushButton::clicked, this, [this]() {
-            ui->hsSizeR->setValue(40); // Valeur par défaut pour SizeHP
-        });
+    connect(ui->gridWidthDefault, &QPushButton::clicked, this, [this]() {
+        ui->gridWidth->setValue(1); // Valeur par défaut pour GridWidth
+    });
+    connect(ui->gridOpacityDefault, &QPushButton::clicked, this, [this]() {
+        ui->gridOpacity->setValue(128); // Valeur par défaut pour GridOpacity
+    });
+    connect(ui->hsThresholdHPDefault, &QPushButton::clicked, this, [this]() {
+        ui->hsThresholdHP->setValue(1000); // Valeur par défaut pour ThresholdHP
+    });
+    connect(ui->hsSizeHPDefault, &QPushButton::clicked, this, [this]() {
+        ui->hsSizeHP->setValue(40); // Valeur par défaut pour SizeHP
+    });
+    connect(ui->hsThresholdHTDefault, &QPushButton::clicked, this, [this]() {
+        ui->hsThresholdHT->setValue(1000); // Valeur par défaut pour ThresholdHP
+    });
+    connect(ui->hsSizeHTDefault, &QPushButton::clicked, this, [this]() {
+        ui->hsSizeHT->setValue(40); // Valeur par défaut pour SizeHP
+    });
+    connect(ui->hsThresholdRDefault, &QPushButton::clicked, this, [this]() {
+        ui->hsThresholdR->setValue(1000); // Valeur par défaut pour ThresholdHP
+    });
+    connect(ui->hsSizeRDefault, &QPushButton::clicked, this, [this]() {
+        ui->hsSizeR->setValue(40); // Valeur par défaut pour SizeHP
+    });
     // Unofficial Fork - end
+
+    QSize initialSize = sizeHint();
+    if (QScreen *screen = QGuiApplication::primaryScreen()) {
+        const QRect availableGeometry = screen->availableGeometry();
+        const QSize maxDefaultSize(availableGeometry.width() * 0.50,
+                                   availableGeometry.height() * 0.50);
+        initialSize = initialSize.boundedTo(maxDefaultSize);
+    }
+    resize(initialSize);
 }
 
 void PreferencesDialog::resetThumbWidth() {
