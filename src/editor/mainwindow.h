@@ -151,6 +151,7 @@ public slots:
     void extractObjects();
     void clearCells();
     void clearMapOnly();
+    void checkForHoles();
 
     void generateInGameMapBuildingFeatures();
     void generateInGameMapTreeFeatures();

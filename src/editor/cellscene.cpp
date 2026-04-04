@@ -49,6 +49,7 @@
 #include "zlevelrenderer.h"
 
 #include "BuildingEditor/buildingtmx.h"
+#include "BuildingEditor/buildingfloor.h"
 
 #include <qmath.h>
 #include <QApplication>
@@ -177,6 +178,15 @@ void CellMiniMapItem::paint(QPainter *painter,
     });
     for (const LotImage *lotImage : qAsConst(lotImages)) {
         paintLotImage(painter, *lotImage);
+    }
+
+    if (mScene->hasHoleInFloor()) {
+        QRegion region;
+        int D = 6;
+        for (const QPoint& p : mScene->holeInFloor()) {
+            region += QRect(p.x() - D / 2, p.y() - D / 2, D, D);
+        }
+        mScene->renderer()->drawTileSelection(painter, region, Qt::red, mScene->sceneRect(), 0);
     }
 }
 
@@ -5844,6 +5854,72 @@ void CellScene::doLater(PendingFlags flags)
 void CellScene::synchLayerGroupsLater()
 {
     doLater(Bounds | AllGroups | ZOrder);
+}
+
+void CellScene::checkHolesOnLevelZero()
+{
+    mHoleInFloor.clear();
+    if (mMapComposite == nullptr) {
+        return;
+    }
+    CompositeLayerGroup *layerGroup = mMapComposite->layerGroupForLevel(0);
+    if (layerGroup == nullptr) {
+        return;
+    }
+    Tiled::Internal::TileDefWatcher *tileDefWatcher = BuildingEditor::getTileDefWatcher(); // NOTE: not safe while multithreading active
+    layerGroup->prepareDrawing2();
+    OrderedCellsTemporaries vars;
+    QVector<const Tiled::Cell*> cells;
+    QSet<int> preparedLevels;
+    for (int y = 0; y < mMapComposite->map()->height(); y++) {
+        for (int x = 0; x < mMapComposite->map()->width(); x++) {
+            layerGroup->orderedCellsAt2(QPoint(x, y), vars, cells);
+            bool hasFloor = false;
+            for (const Tiled::Cell *cell : std::as_const(cells)) {
+                if (TileDefTileset* tdts = tileDefWatcher->tileset(cell->tile->tileset()->name())) {
+                    if (TileDefTile* tdt = tdts->tileAt(cell->tile->id())) {
+                        if (tdt->mProperties.contains(QStringLiteral("solidfloor"))) {
+                            hasFloor = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!hasFloor) {
+                for (int level = -1; level >= mMapComposite->minLevel(); level--) {
+                    if (CompositeLayerGroup* layerGroup2 = mMapComposite->layerGroupForLevel(level)) {
+                        if (!preparedLevels.contains(level)) {
+                            layerGroup2->prepareDrawing2();
+                            preparedLevels += level;
+                        }
+                        layerGroup2->orderedCellsAt2(QPoint(x, y), vars, cells);
+                        for (const Tiled::Cell *cell : std::as_const(cells)) {
+                            if (TileDefTileset* tdts = tileDefWatcher->tileset(cell->tile->tileset()->name())) {
+                                if (TileDefTile* tdt = tdts->tileAt(cell->tile->id())) {
+                                    if (tdt->mProperties.contains(QStringLiteral("solidfloor"))) {
+                                        hasFloor = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (hasFloor) {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!hasFloor) {
+                qDebug() << "no solidfloor tile at" << x << y;
+                mHoleInFloor += QPoint(x, y);
+            }
+        }
+    }
+    if (mHoleInFloor.isEmpty()) {
+        QMessageBox::information(MainWindow::instance(), QStringLiteral("Check For Holes"), QStringLiteral("No holes found."));
+    } else {
+        QMessageBox::warning(MainWindow::instance(), QStringLiteral("Check For Holes"), QStringLiteral("%1 holes found.").arg(mHoleInFloor.size()));
+    }
 }
 
 void CellScene::handlePendingUpdates()

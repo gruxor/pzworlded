@@ -319,6 +319,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionExtractObjects, &QAction::triggered, this, &MainWindow::extractObjects);
     connect(ui->actionClearCell, &QAction::triggered, this, &MainWindow::clearCells);
     connect(ui->actionClearMapOnly, &QAction::triggered, this, &MainWindow::clearMapOnly);
+    connect(ui->actionCheckForHoles, &QAction::triggered, this, &MainWindow::checkForHoles);
 
     connect(ui->actionGenerateInGameMapBuildingFeatures, &QAction::triggered, this, &MainWindow::generateInGameMapBuildingFeatures);
     connect(ui->actionGenerateInGameMapTreeFeatures, &QAction::triggered, this, &MainWindow::generateInGameMapTreeFeatures);
@@ -1981,6 +1982,7 @@ void MainWindow::initActionManager()
     actionManager->registerAction(ui->actionExtractObjects, CONTEXT_MENU, CATEGORY_MENU_CELL, QStringLiteral("Menu.Cell.ExtractObjects"));
     actionManager->registerAction(ui->actionClearCell, CONTEXT_MENU, CATEGORY_MENU_CELL, QStringLiteral("Menu.Cell.ClearCell"));
     actionManager->registerAction(ui->actionClearMapOnly, CONTEXT_MENU, CATEGORY_MENU_CELL, QStringLiteral("Menu.Cell.ClearMapOnly"));
+    actionManager->registerAction(ui->actionCheckForHoles, CONTEXT_MENU, CATEGORY_MENU_CELL, QStringLiteral("Menu.Cell.CheckForHoles"));
 
     actionManager->registerAction(ui->actionRemoveInGameMapFeatures, CONTEXT_MENU, CATEGORY_MENU_INGAME_MAP, QStringLiteral("Menu.InGameMap.RemoveFeature"));
     actionManager->registerAction(ui->actionRemoveInGameMapPoints, CONTEXT_MENU, CATEGORY_MENU_INGAME_MAP, QStringLiteral("Menu.InGameMap.RemovePoint"));
@@ -2806,6 +2808,19 @@ void MainWindow::clearMapOnly()
     undoStack->endMacro();
 }
 
+void MainWindow::checkForHoles()
+{
+    if (!mCurrentDocument) {
+        return;
+    }
+    if (CellDocument *doc = mCurrentDocument->asCellDocument()) {
+        doc->scene()->checkHolesOnLevelZero();
+        if (doc->view()->miniMap()) {
+            doc->view()->miniMap()->update();
+        }
+    }
+}
+
 void MainWindow::writeInGameMapFeaturesXML_300()
 {
     writeInGameMapFeaturesXML(false);
@@ -3117,6 +3132,7 @@ void MainWindow::updateActions()
     WorldDocument *worldDoc = hasDoc ? doc->asWorldDocument() : 0;
     WorldDocument *currentWorldDoc = cellDoc ? cellDoc->worldDocument() : worldDoc;
     World *world = worldDoc ? worldDoc->world() : (cellDoc ? cellDoc->world() : nullptr);
+    bool hasCellDoc = cellDoc != nullptr;
     bool bEnable10x10 = false;
 
     ui->actionSave->setEnabled(hasDoc);
@@ -3184,6 +3200,7 @@ void MainWindow::updateActions()
     ui->actionExtractObjects->setEnabled(cellDoc != 0);
     ui->actionClearCell->setEnabled(false);
     ui->actionClearMapOnly->setEnabled(false);
+    ui->actionCheckForHoles->setEnabled(hasCellDoc);
 
     bool selectedCells = (cellDoc != nullptr) || (worldDoc != nullptr && !worldDoc->selectedCells().isEmpty());
     ui->actionGenerateInGameMapBuildingFeatures->setEnabled(selectedCells);

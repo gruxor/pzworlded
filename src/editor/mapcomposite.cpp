@@ -249,6 +249,7 @@ static QString sFloor = QStringLiteral("Floor");
 static QString sAboveLot = QStringLiteral("AboveLot");
 
 static bool shouldSuppressExistingTilesOnLevel(int level) {
+    Q_UNUSED(level)
     return true;
 }
 

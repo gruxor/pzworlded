@@ -469,6 +469,11 @@ void LotFilesManager256::updateWorkers()
             worker->mStatus = LotFilesWorker256::Status::Idle;
         }
         if (worker->mStatus == LotFilesWorker256::Status::Finished) {
+            if (!worker->mHoleInFloor.isEmpty()) {
+                for (const QPoint& holePos : std::as_const(worker->mHoleInFloor)) {
+                    mFailures += GenerateCellFailure(worker->mCell, QStringLiteral("Hole in floor at %1,%2,0").arg(holePos.x()).arg(holePos.y()));
+                }
+            }
             mProgressDialog->setCellStatus(worker->mCombinedCellMaps->mCell256X - mCellBounds256.left(),
                                            worker->mCombinedCellMaps->mCell256Y - mCellBounds256.top(),
                                            ExportLotsProgressDialog::CellStatus::Exported);
@@ -594,6 +599,7 @@ bool LotFilesManager256::generateCell(LotFilesWorker256 *worker, WorldCell *cell
     }
     worker->mCombinedCellMaps = combinedMaps;
     worker->mCell = cell;
+    worker->mHoleInFloor.clear();
     worker->mStatus = LotFilesWorker256::Status::LoadingMaps;
     return true;
 }
@@ -1002,6 +1008,8 @@ bool LotFilesWorker256::generateCell()
         }
     }
 
+    checkHolesOnLevelZero();
+
     if (mMinLevel == 10000) {
         mMinLevel = mMaxLevel = 0;
     }
@@ -1071,6 +1079,71 @@ bool LotFilesWorker256::generateCell()
     mStatus = Status::Finished;
     mCombinedCellMaps->moveToThread(mCombinedCellMaps->mMapComposite, qApp->thread());
     return true;
+}
+
+void LotFilesWorker256::checkHolesOnLevelZero() {
+    CombinedCellMaps& combinedMaps = *mCombinedCellMaps;
+    MapComposite* mapComposite = combinedMaps.mMapComposite;
+    CompositeLayerGroup *lg = mapComposite->layerGroupForLevel(0);
+    if (lg == nullptr) {
+        return;
+    }
+    Tiled::Internal::TileDefWatcher *tileDefWatcher = BuildingEditor::getTileDefWatcher(); // NOTE: not safe while multithreading active
+    lg->prepareDrawing2();
+    const int boundsX = (mCell->x() - combinedMaps.mMinCell300X) * CELL_WIDTH;
+    const int boundsY = (mCell->y() - combinedMaps.mMinCell300Y) * CELL_WIDTH;
+    QRect cellBounds300(boundsX, boundsY, CELL_WIDTH, CELL_WIDTH);
+    QRect cellBounds256(combinedMaps.mCell256X * CELL_SIZE_256 - combinedMaps.mMinCell300X * CELL_WIDTH,
+                        combinedMaps.mCell256Y * CELL_SIZE_256 - combinedMaps.mMinCell300Y * CELL_WIDTH,
+                        CELL_SIZE_256, CELL_SIZE_256);
+    cellBounds300 &= cellBounds256;
+    QSet<int> preparedLevels;
+    QVector<const Tiled::Cell *> cells(40);
+    OrderedCellsTemporaries vars;
+    for (int y = cellBounds300.top(); y <= cellBounds300.bottom(); y++) {
+        for (int x = cellBounds300.left(); x <= cellBounds300.right(); x++) {
+            cells.resize(0);
+            lg->orderedCellsAt2(QPoint(x, y), vars, cells);
+            bool hasFloor = false;
+            for (const Tiled::Cell *cell : std::as_const(cells)) {
+                if (TileDefTileset* tdts = tileDefWatcher->tileset(cell->tile->tileset()->name())) {
+                    if (TileDefTile* tdt = tdts->tileAt(cell->tile->id())) {
+                        if (tdt->mProperties.contains(QStringLiteral("solidfloor"))) {
+                            hasFloor = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!hasFloor) {
+                for (int level = -1; level >= mapComposite->minLevel(); level--) {
+                    if (CompositeLayerGroup* layerGroup2 = mapComposite->layerGroupForLevel(level)) {
+                        if (!preparedLevels.contains(level)) {
+                            layerGroup2->prepareDrawing2();
+                            preparedLevels += level;
+                        }
+                        layerGroup2->orderedCellsAt2(QPoint(x, y), vars, cells);
+                        for (const Tiled::Cell *cell : std::as_const(cells)) {
+                            if (TileDefTileset* tdts = tileDefWatcher->tileset(cell->tile->tileset()->name())) {
+                                if (TileDefTile* tdt = tdts->tileAt(cell->tile->id())) {
+                                    if (tdt->mProperties.contains(QStringLiteral("solidfloor"))) {
+                                        hasFloor = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (hasFloor) {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!hasFloor) {
+                mHoleInFloor += QPoint(x - boundsX, y - boundsY);
+            }
+        }
+    }
 }
 
 LotFilesWorker256::LotFilesWorker256(LotFilesManager256 *manager, InterruptibleThread *thread) :
