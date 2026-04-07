@@ -276,6 +276,15 @@ void PreferencesDialog::accept()
 
     Preferences *prefs = Preferences::instance();
     Tiled::TileMetaInfoMgr::instance()->changeTilesDirectory(mTilesDirectory);
+
+    prefs->setTheme(ui->themeCombo->currentText());
+    if (ui->fusionStyleMode->isChecked())
+        prefs->setStyleMode(QLatin1String("fusion"));
+    else if (ui->vistaStyleMode->isChecked())
+        prefs->setStyleMode(QLatin1String("windowsvista"));
+    else
+        prefs->setStyleMode(QLatin1String("windows"));
+
     prefs->setUseOpenGL(ui->openGL->isChecked());
     prefs->setLoadAllWorldThumbnails(ui->thumbnails->isChecked());
     prefs->setGridColor(mGridColor);

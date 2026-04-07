@@ -984,7 +984,7 @@ void SubMapTool::showContextMenu(const QPointF &scenePos, const QPoint &screenPo
                 QUrl url = QUrl::fromLocalFile(subMap->mapInfo()->path());
                 if (url.isValid()) {
                     QString filePath = url.toLocalFile(); // Convertir QUrl en QString
-                    QString programPath = QDir::currentPath() + QLatin1String("/../TileD/TileZed.exe"); // Chemin de l'exécutable
+                    QString programPath = Preferences::instance()->tileZedPath() + QLatin1String("/TileZed.exe"); // Chemin de l'exécutable
 
                     // Lancer le programme avec le fichier en argument
                     QProcess::startDetached(programPath, QStringList() << filePath);
@@ -3231,7 +3231,7 @@ void WorldCellTool::showContextMenu(const QPointF &scenePos, const QPoint &scree
         QUrl url = QUrl::fromLocalFile(item->cell()->mapFilePath());
         if (url.isValid()) {
             QString filePath = url.toLocalFile(); // Convertir QUrl en QString
-            QString programPath = QDir::currentPath() + QLatin1String("/../TileD/TileZed.exe"); // Chemin de l'exécutable
+            QString programPath = Preferences::instance()->tileZedPath() + QLatin1String("/TileZed.exe"); // Chemin de l'exécutable
 
             // Récupérer le répertoire contenant l'exécutable
             QFileInfo programInfo(programPath);

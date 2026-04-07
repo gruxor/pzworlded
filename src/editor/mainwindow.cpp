@@ -139,7 +139,7 @@ MainWindow::MainWindow(QWidget *parent)
     , mObjectGroupMenu(new QMenu(this))
     , mZoomable(0)
     , mLotPackWindow(0)
-    , mSettings(QDir::currentPath() + QLatin1String("/settings.ini"), QSettings::IniFormat)
+    , mSettings(QCoreApplication::applicationDirPath() + QLatin1String("/settings.ini"), QSettings::IniFormat)
 {
     ui->setupUi(this);
 
@@ -496,6 +496,7 @@ MainWindow::~MainWindow()
     // run, which causes MapManager to be *recreated* and recreate its threads.
     // I think this leads to the application not terminating promptly.
     ToolManager::instance()->toolBar()->setParent(0);
+    Preferences::deleteInstance();
 #else
     DocumentManager::deleteInstance();
     ToolManager::deleteInstance();
@@ -511,6 +512,7 @@ MainWindow::~MainWindow()
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     writeSettings();
+    mSettings.sync();
 
     if (mLotPackWindow)
         mLotPackWindow->close();

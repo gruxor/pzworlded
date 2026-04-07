@@ -54,7 +54,7 @@ inline QDebug noise() { return QDebug(QtDebugMsg); }
 using namespace Tiled;
 using namespace Tiled::Internal;
 
-int IMAGE_WIDTH = Preferences::instance()->thumbWidth();
+int IMAGE_WIDTH = 512;
 
 MapImageManager *MapImageManager::mInstance = NULL;
 
