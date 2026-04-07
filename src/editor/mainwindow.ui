@@ -417,6 +417,7 @@
     <addaction name="separator"/>
     <addaction name="actionClearCell"/>
     <addaction name="actionClearMapOnly"/>
+    <addaction name="actionCheckForHoles"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -1179,6 +1180,11 @@
    </property>
    <property name="text">
     <string>Show World Thumbnails</string>
+   </property>
+  </action>
+  <action name="actionCheckForHoles">
+   <property name="text">
+    <string>Check For Holes</string>
    </property>
   </action>
  </widget>

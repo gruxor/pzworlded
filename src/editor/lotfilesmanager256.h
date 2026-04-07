@@ -91,8 +91,7 @@ public:
     bool processObjectGroup(CombinedCellMaps &combinedMaps, Tiled::ObjectGroup *objectGroup, int levelOffset, const QPoint &offset);
     void resolveProperties(PropertyHolder *ph, PropertyList &result);
     QString missingTilesetsString(Tiled::Map *map);
-
-//    const QString tr(const char *str) const;
+    void checkHolesOnLevelZero();
 
 public slots:
     void addJob();
@@ -121,6 +120,7 @@ private:
     QList<LotFile::Building*> buildingList;
     QList<LotFile::Building*> mRemovedBuildingList; // building whose north-west corner isn't in the 256x256 cell
     LotFile::Stats mStats;
+    QVector<QPoint> mHoleInFloor;
     QString mError;
 
     friend class LotFilesManager256;

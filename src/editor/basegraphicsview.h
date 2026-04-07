@@ -93,6 +93,9 @@ public:
 
     void scrollContentsBy(int dx, int dy);
 
+    MiniMap *miniMap() const\
+    { return mMiniMap; }
+
     void addMiniMapItem(QGraphicsItem *item);
     void removeMiniMapItem(QGraphicsItem *item);
     virtual QRectF sceneRectForMiniMap() const;

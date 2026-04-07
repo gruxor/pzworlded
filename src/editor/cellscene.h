@@ -902,6 +902,14 @@ public:
     void sortSubMaps();
     bool isAdjacentLot(WorldCellLot *lot) const;
 
+    void checkHolesOnLevelZero();
+
+    bool hasHoleInFloor() const
+    { return !mHoleInFloor.isEmpty(); }
+
+    const QVector<QPoint>& holeInFloor() const
+    { return mHoleInFloor; }
+
 protected:
     void loadMap();
     void updateBordersItem();
@@ -1072,6 +1080,8 @@ private:
     std::array<MapCompositeVBO,9> mMapCompositeVBO;
 
     OverlappingLots mOverlappingLots;
+
+    QVector<QPoint> mHoleInFloor;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(CellScene::PendingFlags)
