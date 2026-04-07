@@ -16,6 +16,7 @@
  */
 
 #include <QApplication>
+#include "debuglogger.h"
 #include "mainwindow.h"
 
 #ifdef ZOMBOID
@@ -41,6 +42,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 #endif
     QApplication a(argc, argv);
+
+    DebugLogger::install(QStringLiteral("debug.log"));
 
     a.setOrganizationName(QLatin1String("TheIndieStone"));
     a.setApplicationName(QLatin1String("PZWorldEd"));
@@ -90,6 +93,7 @@ int main(int argc, char *argv[])
     TileMetaInfoMgr::deleteInstance();
     TilesetManager::deleteInstance();
 
+    DebugLogger::uninstall();
     return ret;
 #else
     return a.exec();

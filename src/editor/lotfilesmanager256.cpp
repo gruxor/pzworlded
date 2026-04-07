@@ -45,6 +45,7 @@
 #include "tileset.h"
 
 #include <QDebug>
+#include <QElapsedTimer>
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QRandomGenerator>
@@ -178,6 +179,13 @@ bool LotFilesManager256::generateWorld(WorldDocument *worldDoc, GenerateMode mod
 {
     mWorldDoc = worldDoc;
     const GenerateLotsSettings &lotSettings = mWorldDoc->world()->getGenerateLotsSettings();
+
+    qDebug() << "LotFilesManager256::generateWorld() started"
+             << "worldOrigin:" << lotSettings.worldOrigin
+             << "worldSize:" << mWorldDoc->world()->size()
+             << "exportDir:" << lotSettings.exportDir
+             << "mode:" << (mode == GenerateAll ? "GenerateAll" : "GenerateSelected")
+             << "threads:" << lotSettings.numberOfThreads;
 
     mCellBounds256 = CombinedCellMaps::toCellRect256(QRect(lotSettings.worldOrigin, QSize(mWorldDoc->world()->size())));
 
@@ -904,6 +912,9 @@ void LotFilesManager256::cancel()
 
 bool LotFilesWorker256::generateCell()
 {
+    QElapsedTimer cellTimer;
+    cellTimer.start();
+
     mStats.reset();
 
     CombinedCellMaps& combinedMaps = *mCombinedCellMaps;
@@ -914,6 +925,10 @@ bool LotFilesWorker256::generateCell()
 
     MapComposite* mapComposite = combinedMaps.mMapComposite;
     MapInfo* mapInfo = mapComposite->mapInfo();
+
+    qDebug() << "LotFilesWorker256::generateCell() started cell256:" << cell256X << cell256Y
+             << "mapSize:" << mapInfo->width() << "x" << mapInfo->height()
+             << "numSubMaps:" << mapComposite->maps().size();
 
 //    PROGRESS progress(tr("Generating .lot files (%1,%2)").arg(cell256X).arg(cell256Y));
 
@@ -929,11 +944,13 @@ bool LotFilesWorker256::generateCell()
             mStatus = Status::Error;
 //            qApp->processEvents(QEventLoop::ProcessEventsFlag::ExcludeUserInputEvents); // handle any pending signal-to-slot before moving threads
             mCombinedCellMaps->moveToThread(mCombinedCellMaps->mMapComposite, qApp->thread());
+            qWarning() << "  generateCell() FAILED: missing tilesets in cell" << cell256X << cell256Y;
             return false;
         }
     }
 
     if (generateHeader(combinedMaps, mapComposite) == false) {
+        qWarning() << "  generateCell() FAILED in generateHeader() for cell" << cell256X << cell256Y;
         mStatus = Status::Error;
         mCombinedCellMaps->moveToThread(mCombinedCellMaps->mMapComposite, qApp->thread());
         return false;
@@ -1006,6 +1023,9 @@ bool LotFilesWorker256::generateCell()
         mMinLevel = mMaxLevel = 0;
     }
 
+    qDebug() << "  generateCell(): grid filled, levels:" << mMinLevel << "to" << mMaxLevel
+             << "tileMap entries:" << TileMap.size();
+
     generateBuildingObjects(mapWidth, mapHeight);
 
     generateJumboTrees(combinedMaps);
@@ -1021,9 +1041,11 @@ bool LotFilesWorker256::generateCell()
             .arg(cell256Y);
 
     QString lotsDirectory = lotSettings.exportDir;
+    qDebug() << "  generateCell(): writing" << fileName << "to" << lotsDirectory;
     QFile file(lotsDirectory + QLatin1Char('/') + fileName);
     if (!file.open(QIODevice::WriteOnly /*| QIODevice::Text*/)) {
         mError = tr("Could not open file for writing.");
+        qWarning() << "  FAILED to open" << file.fileName() << "for writing";
         mStatus = Status::Error;
         mCombinedCellMaps->moveToThread(mCombinedCellMaps->mMapComposite, qApp->thread());
         return false;
@@ -1068,6 +1090,11 @@ bool LotFilesWorker256::generateCell()
 
     clearRemovedBuildingsList();
 
+    qDebug() << "LotFilesWorker256::generateCell() completed cell256:" << cell256X << cell256Y
+             << "in" << cellTimer.elapsed() << "ms"
+             << "rooms:" << roomList.size() << "buildings:" << buildingList.size()
+             << "roomRects:" << mRoomRects.size() << "roomObjects:" << mStats.numRoomObjects;
+
     mStatus = Status::Finished;
     mCombinedCellMaps->moveToThread(mCombinedCellMaps->mMapComposite, qApp->thread());
     return true;
@@ -1091,6 +1118,7 @@ void LotFilesWorker256::work()
 
 bool LotFilesWorker256::generateHeader(CombinedCellMaps& combinedMaps, MapComposite *mapComposite)
 {
+    qDebug() << "  generateHeader() started for cell256:" << combinedMaps.mCell256X << combinedMaps.mCell256Y;
     qDeleteAll(mRoomRects);
     qDeleteAll(roomList);
     qDeleteAll(buildingList);
@@ -1124,6 +1152,9 @@ bool LotFilesWorker256::generateHeader(CombinedCellMaps& combinedMaps, MapCompos
         if (!handleTileset(tileset, firstGid))
             return false;
     }
+
+    qDebug() << "  generateHeader(): tilesets processed:" << tilesets.size()
+             << "tileMap entries:" << TileMap.size() << "firstGid:" << firstGid;
 
 //    const GenerateLotsSettings &lotSettings = combinedMaps.mCells[0]->world()->getGenerateLotsSettings();
 
@@ -1285,11 +1316,17 @@ bool LotFilesWorker256::generateHeader(CombinedCellMaps& combinedMaps, MapCompos
 
     mStats.numBuildings += buildingList.size();
 
+    qDebug() << "  generateHeader() done: rooms:" << roomList.size()
+             << "buildings:" << buildingList.size() << "roomRects:" << mRoomRects.size()
+             << "removed buildings:" << mRemovedBuildingList.size();
+
     return true;
 }
 
 bool LotFilesWorker256::generateHeaderAux(int cell256X, int cell256Y)
 {
+    qDebug() << "  generateHeaderAux() writing .lotheader for cell256:" << cell256X << cell256Y;
+
     QString fileName = tr("%1_%2.lotheader")
             .arg(cell256X)
             .arg(cell256Y);
@@ -1298,6 +1335,7 @@ bool LotFilesWorker256::generateHeaderAux(int cell256X, int cell256Y)
     QFile file(lotsDirectory + QLatin1Char('/') + fileName);
     if (!file.open(QIODevice::WriteOnly /*| QIODevice::Text*/)) {
         mError = tr("Could not open file for writing.");
+        qWarning() << "  FAILED to open" << file.fileName() << "for writing";
         return false;
     }
 
@@ -1332,6 +1370,10 @@ bool LotFilesWorker256::generateHeaderAux(int cell256X, int cell256Y)
     out << qint32(CHUNK_SIZE_256);
     out << qint32(mMinLevel);
     out << qint32(mMaxLevel);
+
+    qDebug() << "  generateHeaderAux(): usedTiles:" << usedTiles.size()
+             << "levels:" << mMinLevel << "to" << mMaxLevel
+             << "rooms:" << roomList.count() << "buildings:" << buildingList.count();
 
     out << qint32(roomList.count());
     for (LotFile::Room *room : qAsConst(roomList)) {
@@ -1783,6 +1825,7 @@ bool LotFilesWorker256::handleTileset(const Tiled::Tileset *tileset, uint &first
 {
     if (!tileset->fileName().isEmpty()) {
         mError = tr("Only tileset image files supported, not external tilesets");
+        qWarning() << "  handleTileset() FAILED: external tileset" << tileset->name();
         return false;
     }
 
@@ -1919,6 +1962,16 @@ bool LotFilesWorker256::processObjectGroup(CombinedCellMaps &combinedMaps, Objec
             LotFile::RoomRect *rr = new LotFile::RoomRect(name, x, y, level, w, h);
             mRoomRects += rr;
             mRoomRectByLevel[level] += rr;
+        }
+    }
+    if (objectGroup->name().contains(QLatin1String("RoomDefs"))) {
+        int count = 0;
+        for (const MapObject *mo : objectGroup->objects()) {
+            if (mo->width() && mo->height()) count++;
+        }
+        if (count > 0) {
+            qDebug() << "  processObjectGroup():" << objectGroup->name()
+                     << "roomDefs:" << count << "level:" << level;
         }
     }
     return true;

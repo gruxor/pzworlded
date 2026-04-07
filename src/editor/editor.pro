@@ -63,6 +63,7 @@ RCC_DIR = .rcc
 OBJECTS_DIR = .obj
 
 SOURCES += main.cpp\
+    debuglogger.cpp \
     ImageProcessor.cpp \
     biomemapgeneratorDialog.cpp \
     BuildingEditor/buildingfurniturefile.cpp \
@@ -194,6 +195,7 @@ SOURCES += main.cpp\
     waterflow.cpp
 
 HEADERS  += mainwindow.h \
+    debuglogger.h \
     BuildingEditor/buildingfurniturefile.h \
     BuildingEditor/buildingtilesfile.h \
     exportlotsprogressdialog.h \
