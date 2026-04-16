@@ -19,7 +19,6 @@
 
 #include <QApplication>
 #include <QDir>
-#include <QDirIterator>
 #include <QFileInfo>
 #include <QSettings>
 #include <QStyle>
@@ -801,23 +800,27 @@ void Preferences::setThumbWidth(int newWidth)
 QStringList Preferences::propertiesFromTZPath(const QString &tileZedPath)
 {
     QStringList result;
-
-    auto addIfExists = [&result](const QString &filePath) {
-        QFileInfo fileInfo(filePath);
-        if (fileInfo.exists() && fileInfo.isFile()) {
-            const QString canonicalPath = fileInfo.canonicalFilePath();
-            if (!canonicalPath.isEmpty() && !result.contains(canonicalPath)) {
-                result += canonicalPath;
-            }
+    const QString iniPath = QDir(tileZedPath).filePath(QLatin1String("settings.ini"));
+    if (QFileInfo::exists(iniPath)) {
+        // tilezed has been launched before, so we can read what the user has in the .tiles preferences
+        QSettings tileZedSettings(iniPath, QSettings::IniFormat);
+        const QStringList files = tileZedSettings.value(QLatin1String("TilePropertiesFiles")).toStringList();
+        for (const QString &f : files) {
+            if (f.isEmpty())
+                continue;
+            const QFileInfo fileInfo(f);
+            const QString canonical = fileInfo.canonicalFilePath();
+            if (!canonical.isEmpty() && !result.contains(canonical))
+                result += canonical;
         }
-    };
-
-    addIfExists(QDir(tileZedPath).filePath(QLatin1String("newtiledefinitions.tiles")));
-
-    if (result.isEmpty()) {
-        QDirIterator it(tileZedPath, QStringList() << QLatin1String("*.tiles"), QDir::Files, QDirIterator::Subdirectories);
-        while (it.hasNext()) {
-            addIfExists(it.next());
+    } else {
+        // no tilezed settings exist so just scan userdata, likely giving us the default tile properties
+        const QString userDataPath = QDir(tileZedPath).filePath(QLatin1String("../.editordata"));
+        const QStringList files = QDir(userDataPath).entryList(QStringList() << QLatin1String("*.tiles"), QDir::Files);
+        for (const QString &fileName : files) {
+            const QString canonical = QFileInfo(QDir(userDataPath).filePath(fileName)).canonicalFilePath();
+            if (!canonical.isEmpty())
+                result += canonical;
         }
     }
 
