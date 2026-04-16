@@ -90,6 +90,20 @@ QString FurnitureGroups::txtPath()
     return Preferences::instance()->configPath(txtName());
 }
 
+static void removeDuplicateFurnitureTiles(FurnitureGroup *group)
+{
+    for (int i = 0; i < group->mTiles.size(); i++) {
+        FurnitureTiles *tiles = group->mTiles.at(i);
+        for (int j = i + 1; j < group->mTiles.size(); j++) {
+            FurnitureTiles *candidate = group->mTiles.at(j);
+            if (!tiles->equals(candidate))
+                continue;
+            group->mTiles.removeAt(j--);
+            delete candidate;
+        }
+    }
+}
+
 bool FurnitureGroups::readTxt()
 {
     QFileInfo info(txtPath());
@@ -116,6 +130,9 @@ bool FurnitureGroups::readTxt()
     mRevision = file.getRevision();
     mSourceRevision = file.getSourceRevision();
     mGroups = file.takeGroups();
+    for (FurnitureGroup *group : std::as_const(mGroups)) {
+        removeDuplicateFurnitureTiles(group);
+    }
     return true;
 #if 0
     FurnitureTiles *tiles = new FurnitureTiles;
